@@ -207,7 +207,7 @@ jobs:
         if: failure()
         run: |
           echo "::error::Pipeline failed. Common fixes:"
-          echo "::error::  CMS IDs changed → update KNOWN_DATASET_IDS in scrapers/cms_scraper.py"
+          echo "::error::  CMS files moved → check /jsonapi/node/dataset response in scrapers/cms_scraper.py"
           echo "::error::  NASHP button moved → update _find_download_button in scrapers/nashp_scraper.py"
           echo "::error::  Sheps table changed → update _infer_sheps_columns in scrapers/reh_scraper.py"
           echo "::error::  340B endpoint changed → update OPAIS_JSON_URL in scrapers/hrsa_340b_scraper.py"

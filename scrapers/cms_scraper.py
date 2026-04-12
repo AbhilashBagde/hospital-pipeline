@@ -3,45 +3,48 @@ scrapers/cms_scraper.py
 =======================
 Downloads Hospital Provider Cost Report CSVs from data.cms.gov.
 
-CMS publishes these via the Socrata Open Data API (SODA).
-Dataset IDs are discovered dynamically via the catalog API and
-cached in KNOWN_DATASET_IDS as a reliable fallback.
+CMS migrated away from the Socrata SODA API (old per-year dataset IDs like
+fv3v-7x8v are 410 Gone). They now serve direct CSV files discoverable via
+a Drupal JSON:API endpoint that lists all year versions with their download URLs.
+
+Discovery endpoint (no auth required):
+  GET https://data.cms.gov/jsonapi/node/dataset
+      ?include=field_ref_primary_data_file,field_ref_primary_data_file.field_media_file
+      &filter[field_dataset_type.name]=Hospital Provider Cost Report
+      &sort=-field_dataset_version
+
+Each result includes a relative path like:
+  /sites/default/files/2026-01/<uuid>/CostReport_2023_Final.csv
+
+which resolves to:
+  https://data.cms.gov/sites/default/files/2026-01/<uuid>/CostReport_2023_Final.csv
 
 Usage:
     from scrapers.cms_scraper import download_cms_cost_reports
     paths = download_cms_cost_reports(output_dir="data/raw", years=[2021, 2022, 2023])
 """
 
-import time
 import logging
+import time
 from pathlib import Path
-from datetime import datetime
 
 import requests
 
 logger = logging.getLogger(__name__)
 
-# ── Fallback dataset IDs (verify at data.cms.gov if downloads fail) ──────────
-# Navigate to: https://data.cms.gov/provider-compliance/cost-report/hospital-provider-cost-report
-# Each year is a separate dataset; copy the ID from the dataset URL.
-KNOWN_DATASET_IDS: dict[int, str] = {
-    2020: "fv3v-7x8v",
-    2021: "6vnz-fwrk",
-    2022: "fjfh-y76p",
-    2023: "ulyc-65am",  # Most recent; may need updating when 2024 releases
-}
-
-CMS_CATALOG_URL = (
-    "https://data.cms.gov/data-api/v1/dataset"
-    "?keyword=hospital+provider+cost+report&size=20"
+CMS_BASE        = "https://data.cms.gov"
+JSONAPI_URL     = (
+    f"{CMS_BASE}/jsonapi/node/dataset"
+    "?include=field_ref_primary_data_file"
+    "%2Cfield_ref_primary_data_file.field_media_file"
+    "&fields%5Bnode--dataset%5D=field_dataset_version%2Cfield_ref_primary_data_file"
+    "&filter%5Bfield_dataset_type.name%5D=Hospital+Provider+Cost+Report"
+    "&sort=-field_dataset_version"
 )
-SODA_BASE = "https://data.cms.gov/resource/{dataset_id}.csv"
 
-# SODA row limit per request (max 50k; cost reports have ~6k rows so one page is fine)
-SODA_LIMIT = 50_000
-REQUEST_TIMEOUT = 120  # seconds
-RETRY_ATTEMPTS = 3
-RETRY_BACKOFF = 5  # seconds
+REQUEST_TIMEOUT = 300   # seconds — the CSVs are ~30 MB each
+RETRY_ATTEMPTS  = 3
+RETRY_BACKOFF   = 10    # seconds
 
 
 def _get(url: str, stream: bool = False, **kwargs) -> requests.Response:
@@ -59,30 +62,70 @@ def _get(url: str, stream: bool = False, **kwargs) -> requests.Response:
             time.sleep(wait)
 
 
-def _discover_dataset_ids() -> dict[int, str]:
+def _discover_year_urls() -> dict[int, str]:
     """
-    Query the CMS catalog API to find the latest dataset IDs for each year.
-    Returns a dict like {2023: "ulyc-65am", ...}.
-    Falls back silently to KNOWN_DATASET_IDS on failure.
+    Query the CMS Drupal JSON:API to build a {year: absolute_csv_url} mapping.
+    Returns an empty dict on failure so the caller can decide how to handle it.
     """
     try:
-        resp = _get(CMS_CATALOG_URL)
-        datasets = resp.json().get("data", [])
-        discovered: dict[int, str] = {}
-        for ds in datasets:
-            title = ds.get("title", "").lower()
-            if "hospital provider cost report" in title:
-                # Extract year from title, e.g. "Hospital Provider Cost Report FY2023"
-                for yr in range(2019, datetime.now().year + 1):
-                    if str(yr) in title:
-                        discovered[yr] = ds["identifier"]
-                        break
-        if discovered:
-            logger.info(f"  Discovered dataset IDs from catalog: {discovered}")
-            return {**KNOWN_DATASET_IDS, **discovered}   # discovered overrides known
+        resp = _get(JSONAPI_URL, headers={"Accept": "application/vnd.api+json"})
+        payload = resp.json()
     except Exception as exc:
-        logger.warning(f"  Catalog discovery failed ({exc}). Using known dataset IDs.")
-    return KNOWN_DATASET_IDS
+        logger.error(f"  CMS JSON:API discovery failed: {exc}")
+        return {}
+
+    data     = payload.get("data", [])
+    included = payload.get("included", [])
+
+    # Build a lookup table: node/media/file id → included object
+    inc_map: dict[str, dict] = {item["id"]: item for item in included}
+
+    year_urls: dict[int, str] = {}
+
+    for item in data:
+        version = item.get("attributes", {}).get("field_dataset_version", "")
+        try:
+            year = int(version[:4])
+        except (ValueError, TypeError):
+            continue
+
+        # Relationship: dataset → media node
+        file_rel = (
+            item.get("relationships", {})
+                .get("field_ref_primary_data_file", {})
+                .get("data", {})
+        )
+        if not isinstance(file_rel, dict):
+            continue
+        media = inc_map.get(file_rel.get("id", ""), {})
+
+        # Relationship: media node → file entity
+        file_data_rel = (
+            media.get("relationships", {})
+                 .get("field_media_file", {})
+                 .get("data", {})
+        )
+        if not isinstance(file_data_rel, dict):
+            continue
+        file_node = inc_map.get(file_data_rel.get("id", ""), {})
+
+        rel_url = (
+            file_node.get("attributes", {})
+                     .get("uri", {})
+                     .get("url", "")
+        )
+        if not rel_url:
+            continue
+
+        year_urls[year] = CMS_BASE + rel_url
+
+    if year_urls:
+        logger.info(f"  Discovered {len(year_urls)} year files from CMS JSON:API: "
+                    f"{sorted(year_urls.keys())}")
+    else:
+        logger.warning("  No year URLs found in CMS JSON:API response.")
+
+    return year_urls
 
 
 def download_cms_cost_reports(
@@ -97,7 +140,7 @@ def download_cms_cost_reports(
     output_dir : str or Path
         Destination folder. Created if it doesn't exist.
     years : list[int] or None
-        Which fiscal years to download. Defaults to all known years.
+        Which fiscal years to download. Defaults to all available years.
 
     Returns
     -------
@@ -106,65 +149,42 @@ def download_cms_cost_reports(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset_ids = _discover_dataset_ids()
+    year_urls = _discover_year_urls()
+    if not year_urls:
+        logger.error("  CMS discovery returned no file URLs. Cannot download.")
+        return {}
 
-    if years is None:
-        years = sorted(dataset_ids.keys())
-
+    target_years = sorted(years) if years is not None else sorted(year_urls.keys())
     results: dict[int, Path] = {}
 
-    for year in years:
+    for year in target_years:
         dest = output_dir / f"Hospital_Provider_Cost_Report_{year}.csv"
 
-        # Skip if already downloaded this run (idempotent)
         if dest.exists():
-            logger.info(f"  {year}: already exists at {dest}, skipping download.")
+            logger.info(f"  {year}: already exists at {dest}, skipping.")
             results[year] = dest
             continue
 
-        if year not in dataset_ids:
-            logger.warning(f"  {year}: no dataset ID known. Skipping.")
+        if year not in year_urls:
+            logger.warning(f"  {year}: no file URL found in CMS catalog. Skipping.")
             continue
 
-        dataset_id = dataset_ids[year]
-        url = SODA_BASE.format(dataset_id=dataset_id)
-        params = {"$limit": SODA_LIMIT, "$offset": 0}
+        url = year_urls[year]
+        logger.info(f"  {year}: downloading {url} …")
 
-        logger.info(f"  {year}: downloading from {url} …")
-        rows_written = 0
-
-        with dest.open("w", encoding="utf-8") as fh:
-            first_chunk = True
-            offset = 0
-
-            while True:
-                params["$offset"] = offset
-                resp = _get(url, params=params)
-                chunk = resp.text
-
-                if not chunk.strip():
-                    break
-
-                lines = chunk.splitlines()
-
-                if first_chunk:
-                    fh.write("\n".join(lines) + "\n")
-                    rows_written += len(lines) - 1  # subtract header
-                    first_chunk = False
-                else:
-                    # Skip header row on subsequent pages
-                    data_lines = lines[1:]
-                    if not data_lines:
-                        break
-                    fh.write("\n".join(data_lines) + "\n")
-                    rows_written += len(data_lines)
-
-                if len(lines) - 1 < SODA_LIMIT:
-                    break  # Last page
-                offset += SODA_LIMIT
-
-        logger.info(f"  {year}: ✓ {rows_written:,} rows → {dest}")
-        results[year] = dest
+        try:
+            resp = _get(url, stream=True)
+            with dest.open("wb") as fh:
+                bytes_written = 0
+                for chunk in resp.iter_content(chunk_size=1 << 20):  # 1 MB chunks
+                    fh.write(chunk)
+                    bytes_written += len(chunk)
+            logger.info(f"  {year}: ✓ {bytes_written / 1e6:.1f} MB → {dest}")
+            results[year] = dest
+        except Exception as exc:
+            logger.error(f"  {year}: download failed — {exc}")
+            if dest.exists():
+                dest.unlink()  # remove partial file
 
     return results
 
