@@ -1,12 +1,12 @@
 # Large raw source files (re-downloaded each quarter)
 data/raw/
 
-# Pipeline outputs (published via GitHub Releases or S3, not committed)
-data/output/SST_v3.csv
-data/output/Final_Hospital_Dataset.csv
+# Pipeline outputs — tracked via Git LFS (see .gitattributes)
+# data/output/SST_v3.csv
+# data/output/Final_Hospital_Dataset.csv
 
-# Archive CSVs (large; keep only manifest in git)
-data/archive/*.csv
+# Archive CSVs — tracked via Git LFS
+# data/archive/*.csv
 
 # Python
 __pycache__/
