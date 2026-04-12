@@ -1,0 +1,21 @@
+# Core data
+pandas>=2.1.0
+numpy>=1.26.0
+openpyxl>=3.1.2
+xlrd>=2.0.1
+
+# HTTP scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Headless browser (NASHP + Sheps Center REH scraping)
+playwright>=1.43.0
+
+# 340B matching
+scikit-learn>=1.4.0
+
+# 340B embedding match (optional — only needed if OPENAI_API_KEY is set)
+openai>=1.12.0
+tqdm>=4.66.0
+python-dateutil>=2.9.0

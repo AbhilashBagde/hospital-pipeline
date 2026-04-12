@@ -1,0 +1,29 @@
+# Large raw source files (re-downloaded each quarter)
+data/raw/
+
+# Pipeline outputs (published via GitHub Releases or S3, not committed)
+data/output/SST_v3.csv
+data/output/Final_Hospital_Dataset.csv
+
+# Archive CSVs (large; keep only manifest in git)
+data/archive/*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ── What IS committed ──────────────────────────────────────────────────────
+# data/manual/REH_Info_Cleaned.csv     ← manually maintained, small
+# data/manual/NASHP_HCT_Data_latest.xlsx  ← manual fallback, ~5MB
+# data/output/pipeline_manifest.txt    ← run metadata only

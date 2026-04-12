@@ -1,0 +1,213 @@
+name: Quarterly Hospital Data Pipeline
+
+on:
+  # ── Scheduled: 08:00 UTC on 1st of Jan, Apr, Jul, Oct ─────────────────────
+  schedule:
+    - cron: "0 8 1 1,4,7,10 *"
+
+  # ── Manual trigger from GitHub Actions UI ──────────────────────────────────
+  workflow_dispatch:
+    inputs:
+      skip_download:
+        description: "Skip download steps (reuse cached raw files)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["true", "false"]
+      years:
+        description: "CMS years to download, space-separated (e.g. '2022 2023'). Blank = all."
+        required: false
+        default: ""
+
+  # ── Also run on pipeline code changes (for testing) ────────────────────────
+  push:
+    branches: [main]
+    paths:
+      - "pipeline.py"
+      - "build_dataset.py"
+      - "scrapers/**"
+      - ".github/workflows/quarterly_update.yml"
+
+permissions:
+  contents: write   # needed to commit manifest + create releases
+  actions: read
+
+jobs:
+  run-pipeline:
+    name: Download → Build → Match → Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      USE_S3: ${{ vars.USE_S3 || 'false' }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      S3_BUCKET: ${{ vars.S3_BUCKET || '' }}
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── 2. Set up Python ─────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # ── 3. Install Python dependencies ───────────────────────────────────────
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Install Playwright + Chromium browser ──────────────────────────────
+      # Playwright headless Chromium is used for:
+      #   - NASHP hospital cost tool download (JS-rendered button)
+      #   - UNC Sheps Center REH list table (JS-rendered table)
+      - name: Install Playwright browsers
+        run: |
+          playwright install chromium
+          playwright install-deps chromium
+
+      # ── 5. Cache raw downloads (avoid re-downloading CMS files unchanged) ────
+      - name: Get current quarter key
+        id: quarter
+        run: |
+          QUARTER=$(python3 -c "
+          from datetime import date
+          d = date.today()
+          q = (d.month - 1) // 3 + 1
+          print(f'{d.year}-Q{q}')
+          ")
+          echo "key=$QUARTER" >> $GITHUB_OUTPUT
+          echo "Quarter: $QUARTER"
+
+      - name: Restore raw data cache
+        id: cache-raw
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: raw-data-${{ runner.os }}-${{ steps.quarter.outputs.key }}
+          restore-keys: |
+            raw-data-${{ runner.os }}-
+
+      # ── 6. Run the pipeline ───────────────────────────────────────────────────
+      - name: Run pipeline
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.skip_download }}" = "true" ]; then
+            ARGS="$ARGS --skip-download"
+          fi
+          if [ -n "${{ github.event.inputs.years }}" ]; then
+            ARGS="$ARGS --years ${{ github.event.inputs.years }}"
+          fi
+          python pipeline.py $ARGS
+
+      # ── 7. Validate outputs ───────────────────────────────────────────────────
+      - name: Validate outputs
+        run: |
+          python3 - <<'EOF'
+          import sys
+          from pathlib import Path
+          import pandas as pd
+
+          sst = Path("data/output/SST_v3.csv")
+          if not sst.exists():
+              print("ERROR: SST_v3.csv not found!", file=sys.stderr)
+              sys.exit(1)
+
+          df = pd.read_csv(sst, nrows=5)
+          row_count = sum(1 for _ in open(sst)) - 1
+
+          print(f"✓ SST_v3.csv: {row_count:,} rows × {len(df.columns)} columns")
+          assert "CCN" in df.columns,              "Missing CCN"
+          assert "Is_340B_Enrolled" in df.columns, "Missing Is_340B_Enrolled"
+          assert "Is_REH_Converter" in df.columns, "Missing Is_REH_Converter"
+          assert row_count > 10_000,               f"Too few rows: {row_count}"
+
+          reh_count = pd.read_csv(sst, usecols=["Is_REH_Converter"])["Is_REH_Converter"].sum()
+          print(f"✓ REH converter rows: {int(reh_count)}")
+          print("✓ All validation checks passed.")
+          EOF
+
+      # ── 8. Get run date ───────────────────────────────────────────────────────
+      - name: Get run date
+        id: date
+        run: echo "today=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      # ── 9a. Publish to GitHub Release ─────────────────────────────────────────
+      - name: Create GitHub Release
+        if: env.USE_S3 != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "data-${{ steps.date.outputs.today }}"
+          name: "Hospital Data — ${{ steps.date.outputs.today }}"
+          body: |
+            ## Quarterly Pipeline Run — ${{ steps.date.outputs.today }}
+
+            ### Files
+            | File | Description |
+            |------|-------------|
+            | `SST_v3.csv` | Final merged dataset (NASHP + CMS + 340B) |
+            | `Final_Hospital_Dataset.csv` | Pre-340B intermediate |
+            | `REH_Info_Cleaned.csv` | Scraped REH conversion list |
+            | `pipeline_manifest.txt` | Run metadata |
+
+            ### Sources used
+            - CMS Hospital Provider Cost Reports (data.cms.gov Socrata API)
+            - NASHP Hospital Cost Tool (headless browser scrape)
+            - HRSA 340B Covered Entity Daily Export (OPAIS API)
+            - UNC Sheps Center REH list (headless browser scrape)
+            - CMS Provider of Services file (Socrata API)
+
+            ### Download latest
+            ```python
+            import pandas as pd
+            url = "https://github.com/${{ github.repository }}/releases/latest/download/SST_v3.csv"
+            df = pd.read_csv(url)
+            ```
+          files: |
+            data/output/SST_v3.csv
+            data/output/Final_Hospital_Dataset.csv
+            data/raw/REH_Info_Cleaned.csv
+            data/output/pipeline_manifest.txt
+          make_latest: true
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 9b. Publish to S3 (optional alternative) ──────────────────────────────
+      - name: Upload to S3
+        if: env.USE_S3 == 'true' && env.S3_BUCKET != ''
+        run: |
+          pip install awscli --quiet
+          TODAY=${{ steps.date.outputs.today }}
+          aws s3 cp data/output/SST_v3.csv                s3://$S3_BUCKET/latest/SST_v3.csv
+          aws s3 cp data/output/SST_v3.csv                s3://$S3_BUCKET/archive/SST_v3_${TODAY}.csv
+          aws s3 cp data/output/Final_Hospital_Dataset.csv s3://$S3_BUCKET/latest/Final_Hospital_Dataset.csv
+          aws s3 cp data/raw/REH_Info_Cleaned.csv          s3://$S3_BUCKET/latest/REH_Info_Cleaned.csv
+          aws s3 cp data/output/pipeline_manifest.txt      s3://$S3_BUCKET/latest/pipeline_manifest.txt
+          echo "✓ Uploaded to s3://$S3_BUCKET/"
+
+      # ── 10. Commit manifest back to repo ──────────────────────────────────────
+      - name: Commit manifest
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/output/pipeline_manifest.txt || true
+          git diff --staged --quiet && echo "Nothing new to commit." || \
+            git commit -m "chore: pipeline run ${{ steps.date.outputs.today }} [skip ci]"
+          git push || echo "Push skipped (branch protection or nothing to push)."
+
+      # ── 11. Surface failure details ────────────────────────────────────────────
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::Pipeline failed. Common fixes:"
+          echo "::error::  CMS IDs changed → update KNOWN_DATASET_IDS in scrapers/cms_scraper.py"
+          echo "::error::  NASHP button moved → update _find_download_button in scrapers/nashp_scraper.py"
+          echo "::error::  Sheps table changed → update _infer_sheps_columns in scrapers/reh_scraper.py"
+          echo "::error::  340B endpoint changed → update OPAIS_JSON_URL in scrapers/hrsa_340b_scraper.py"
