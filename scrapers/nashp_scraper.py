@@ -18,9 +18,16 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-NASHP_URL     = "https://nashp.org/hospital-cost-tool/"
-TIMEOUT_MS    = 60_000   # 60s page/navigation timeout
-DOWNLOAD_WAIT = 90_000   # 90s to wait for the download to complete
+NASHP_TOOL_URL = "https://tool.nashp.org/"
+# Prefer the 2020-2024 dataset (matches build_dataset.py's expected sheet name).
+# Fall back to the full 2011-2024 file if the shorter one isn't found.
+PREFERRED_LINK_TEXTS = [
+    "Hospital-level dataset (2020 – 2024)",
+    "Hospital-level dataset (2011 – 2024)",
+    "Hospital-level dataset",
+]
+TIMEOUT_MS    = 60_000
+DOWNLOAD_WAIT = 120_000
 
 
 def download_nashp_data(
@@ -68,8 +75,8 @@ def download_nashp_data(
     logger.error(
         "\n" + "=" * 60 + "\n"
         "NASHP DATA NOT FOUND — MANUAL ACTION REQUIRED\n"
-        "1. Visit: https://nashp.org/hospital-cost-tool/\n"
-        "2. Click 'Download the data' → save as NASHP_HCT_Data_latest.xlsx\n"
+        "1. Visit: https://tool.nashp.org/\n"
+        "2. Click 'Hospital-level dataset (2020 – 2024)' → save the .xlsx\n"
         "3. Place in data/manual/ and commit.\n"
         "=" * 60
     )
@@ -90,34 +97,34 @@ def _playwright_download(output_dir: Path) -> Path | None:
         context = browser.new_context(
             accept_downloads=True,
             user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/122.0.0.0 Safari/537.36"
             ),
         )
         page = context.new_page()
 
-        logger.info(f"  Navigating to {NASHP_URL}…")
-        page.goto(NASHP_URL, wait_until="networkidle", timeout=TIMEOUT_MS)
-        _dismiss_cookie_banner(page)
+        logger.info(f"  Navigating to {NASHP_TOOL_URL}…")
+        page.goto(NASHP_TOOL_URL, wait_until="domcontentloaded", timeout=TIMEOUT_MS)
+        page.wait_for_timeout(5_000)
 
-        download_button = _find_download_button(page)
-        if download_button is None:
-            logger.warning("  Could not locate NASHP download button on page.")
+        download_link = _find_download_button(page)
+        if download_link is None:
+            logger.warning("  Could not locate NASHP download link on page.")
             browser.close()
             return None
 
-        logger.info("  Clicking download button and waiting for file…")
+        logger.info("  Clicking download link and waiting for file…")
         with page.expect_download(timeout=DOWNLOAD_WAIT) as dl_info:
-            download_button.click()
+            download_link.click()
 
         download = dl_info.value
         suggested = download.suggested_filename or "NASHP_HCT_Data_latest.xlsx"
         dest = output_dir / suggested
         download.save_as(dest)
 
-        size_kb = dest.stat().st_size / 1024
-        logger.info(f"  ✓ NASHP file saved: {dest} ({size_kb:.0f} KB)")
+        size_mb = dest.stat().st_size / 1e6
+        logger.info(f"  ✓ NASHP file saved: {dest} ({size_mb:.1f} MB)")
         browser.close()
         return dest
 
@@ -141,33 +148,27 @@ def _dismiss_cookie_banner(page) -> None:
 
 
 def _find_download_button(page):
-    """Find the NASHP 'Download the data' button/link using multiple strategies."""
-    strategies = [
-        "a:has-text('Download the data')",
-        "button:has-text('Download the data')",
-        "a:has-text('Download Data')",
-        "a[href*='.xlsx']",
-        "a[href*='download']",
-        "a:has-text('download')",
-        "button:has-text('download')",
-    ]
-    for sel in strategies:
+    """
+    Find the NASHP dataset download link on tool.nashp.org.
+    Tries preferred link texts in order, then falls back to any .xlsx href.
+    """
+    # Try preferred link texts (partial match)
+    for text in PREFERRED_LINK_TEXTS:
         try:
-            locator = page.locator(sel).first
+            locator = page.get_by_text(text, exact=False).first
             if locator.is_visible(timeout=3_000):
-                logger.info(f"  Found download element via: '{sel}'")
+                logger.info(f"  Found download link via text: '{text}'")
                 return locator
         except Exception:
             continue
 
-    # Fallback: scan all links
-    for link in page.locator("a[href]").all():
+    # Fallback: any link pointing to an .xlsx file
+    for link in page.locator("a[href*='.xlsx']").all():
         try:
             href = link.get_attribute("href") or ""
-            text = (link.inner_text() or "").strip().lower()
-            if ".xlsx" in href.lower() or "download" in text:
-                logger.info(f"  Fallback link found: {text!r} → {href}")
-                return link
+            text = (link.inner_text() or "").strip()
+            logger.info(f"  Fallback xlsx link: {repr(text[:60])} → {href[:80]}")
+            return link
         except Exception:
             continue
 

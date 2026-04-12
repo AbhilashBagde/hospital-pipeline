@@ -18,12 +18,13 @@ Usage:
   python build_dataset.py
 """
 
+import json
 import pandas as pd
 import numpy as np
 import os
 
 # ---------------------------------------------------------------------------
-# CONFIGURATION
+# CONFIGURATION  (defaults; pipeline.py overrides via BD_* env vars)
 # ---------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,6 +38,16 @@ CMS_FILES = {
 NASHP_FILE  = os.path.join(BASE_DIR, "NASHP 2020-2024 HCT Data 2025 Dec.xlsx")
 REH_FILE    = os.path.join(BASE_DIR, "REH Info Cleaned.csv")
 OUTPUT_FILE = os.path.join(BASE_DIR, "Final_Hospital_Dataset.csv")
+
+# Allow pipeline.py to override paths via environment variables
+if os.environ.get("BD_CMS_FILES"):
+    CMS_FILES = {int(k): v for k, v in json.loads(os.environ["BD_CMS_FILES"]).items()}
+if os.environ.get("BD_NASHP_FILE"):
+    NASHP_FILE = os.environ["BD_NASHP_FILE"]
+if os.environ.get("BD_REH_FILE"):
+    REH_FILE = os.environ["BD_REH_FILE"]
+if os.environ.get("BD_OUTPUT_FILE"):
+    OUTPUT_FILE = os.environ["BD_OUTPUT_FILE"]
 
 
 # ---------------------------------------------------------------------------
@@ -380,13 +391,17 @@ reh_info = pd.read_csv(REH_FILE)
 
 # Initialize REH columns
 merged["Is_REH_Converter"]     = 0
-merged["REH_Conversion_Date"]  = np.nan
-merged["REH_Status"]           = np.nan
-merged["Pre_REH_Payment_Type"] = np.nan
+merged["REH_Conversion_Date"]  = None   # object dtype — accepts date strings
+merged["REH_Status"]           = None   # object dtype — accepts strings
+merged["Pre_REH_Payment_Type"] = None   # object dtype — accepts strings
 merged["Pre_REH_CCN"]          = np.nan
 
+# Coerce CCN columns to numeric to handle floats / NaNs gracefully
+reh_info["Pre-REH CCN"]  = pd.to_numeric(reh_info["Pre-REH CCN"],  errors="coerce")
+reh_info["Post-REH CCN"] = pd.to_numeric(reh_info["Post-REH CCN"], errors="coerce")
+
 # --- Case A: Hospitals that kept their CCN after converting ---
-same_ccn = reh_info[reh_info["Post-REH CCN"].isna()].copy()
+same_ccn = reh_info[reh_info["Post-REH CCN"].isna() & reh_info["Pre-REH CCN"].notna()].copy()
 same_ccn["Pre_CCN"] = same_ccn["Pre-REH CCN"].astype(int)
 
 for _, row in same_ccn.iterrows():
@@ -401,8 +416,9 @@ for _, row in same_ccn.iterrows():
 # Their post-conversion data lives under the new CCN.
 # Pre-conversion data lives under the old CCN.
 has_post = reh_info[reh_info["Post-REH CCN"].notna()].copy()
-has_post["Pre_CCN"]  = has_post["Pre-REH CCN"].astype(int)
 has_post["Post_CCN"] = has_post["Post-REH CCN"].astype(int)
+has_post = has_post[has_post["Pre-REH CCN"].notna()].copy()
+has_post["Pre_CCN"]  = has_post["Pre-REH CCN"].astype(int)
 
 for _, row in has_post.iterrows():
     # Flag pre-conversion rows (old CCN)

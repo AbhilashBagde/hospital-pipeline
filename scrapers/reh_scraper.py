@@ -3,19 +3,18 @@ scrapers/reh_scraper.py
 =======================
 Builds REH_Info_Cleaned.csv automatically from two public sources:
 
-  Source A — UNC Sheps Center REH list (live, quarterly updated)
-    URL: https://www.shepscenter.unc.edu/programs-projects/rural-health/rural-emergency-hospitals/
-    Contains: Hospital name, state, previous payment type, effective REH date
-    Method: Playwright headless (JavaScript-rendered table)
+  Source A — CMS Hospital Enrollments dataset (primary)
+    UUID: f6f6505c-e8b0-4d57-b258-e2b94133aaf2
+    Contains: REH CCN, Pre-REH CCN, conversion date, REH conversion flag
+    Method: CMS data-api (JSON) — no browser needed
 
-  Source B — CMS Provider of Services (POS) file (quarterly updated)
-    URL: data.cms.gov Socrata API
-    Contains: CCN, facility type, termination/effective dates
-    Method: Socrata API → filter for REH facility type codes
-    Used to: (a) resolve CCNs, (b) find Pre-REH CCNs via a second POS query
+  Source B — UNC Sheps Center REH list (supplemental)
+    URL: https://www.shepscenter.unc.edu/.../rural-emergency-hospitals/
+    Contains: Previous Medicare Payment Type, Current Status
+    Method: Playwright headless (JS-rendered table)
 
-The two sources are merged on hospital name + state to produce the same
-schema that build_dataset.py expects in REH_Info_Cleaned.csv:
+The two sources are merged on hospital name + state to produce the schema
+that build_dataset.py expects in REH_Info_Cleaned.csv:
   Pre-REH CCN, Post-REH CCN, Hospital Name, State, REH Conversion Date,
   Current Status, Previous Medicare Payment Type
 
@@ -26,7 +25,6 @@ Usage:
 
 import logging
 import re
-import time
 from pathlib import Path
 
 import pandas as pd
@@ -34,28 +32,22 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# ── CMS Provider of Services (POS) Socrata dataset ────────────────────────────
-# Hospital & Non-Hospital Facilities file — updated quarterly
-# Browse at: https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/
-#            provider-of-services-file-hospital-non-hospital-facilities
-POS_DATASET_ID = "395p-9vve"          # verify at data.cms.gov if downloads fail
-POS_SODA_URL   = f"https://data.cms.gov/resource/{POS_DATASET_ID}.csv"
-
-# REH facility type code in the POS file (PRVDR_CTGRY_CD)
-REH_CATEGORY_CODE = "16"              # CMS facility category for REH
-
-# CAH facility type code — used to find pre-conversion records
-CAH_CATEGORY_CODE = "11"
+# ── CMS Hospital Enrollments dataset ─────────────────────────────────────────
+# https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/hospital-enrollments
+CMS_ENROLLMENTS_UUID = "f6f6505c-e8b0-4d57-b258-e2b94133aaf2"
+CMS_ENROLLMENTS_URL  = (
+    f"https://data.cms.gov/data-api/v1/dataset/{CMS_ENROLLMENTS_UUID}/data"
+)
 
 # ── Sheps Center REH page ─────────────────────────────────────────────────────
-SHEPS_REH_URL = (
+SHEPS_REH_URL      = (
     "https://www.shepscenter.unc.edu/"
     "programs-projects/rural-health/rural-emergency-hospitals/"
 )
+PLAYWRIGHT_TIMEOUT = 60_000
+PLAYWRIGHT_WAIT    = 12_000
 
 REQUEST_TIMEOUT = 120
-PLAYWRIGHT_TIMEOUT = 60_000
-PLAYWRIGHT_WAIT    = 15_000   # wait for table to render after page load
 
 
 def download_reh_info(
@@ -64,7 +56,7 @@ def download_reh_info(
 ) -> Path | None:
     """
     Build and save REH_Info_Cleaned.csv.
-    Returns the path, or None if both sources fail.
+    Returns the path, or None if all sources fail.
     """
     output_dir = Path(output_dir)
     manual_dir = Path(manual_dir)
@@ -72,18 +64,16 @@ def download_reh_info(
 
     dest = output_dir / "REH_Info_Cleaned.csv"
 
-    # ── Source A: Sheps Center list ───────────────────────────────────────────
+    # ── Source A: CMS Hospital Enrollments (primary — most reliable) ──────────
+    enrollments_df = _fetch_cms_enrollments()
+
+    # ── Source B: Sheps Center (supplemental — adds payment type + status) ────
     sheps_df = _scrape_sheps_center()
 
-    # ── Source B: CMS POS file ────────────────────────────────────────────────
-    pos_reh_df = _fetch_pos_reh()
-    pos_cah_df = _fetch_pos_cah()      # needed to map pre-REH CCNs
-
     # ── Merge ─────────────────────────────────────────────────────────────────
-    combined = _merge_sources(sheps_df, pos_reh_df, pos_cah_df)
+    combined = _merge_sources(enrollments_df, sheps_df)
 
     if combined is None or len(combined) == 0:
-        # Fall back to previously committed file
         for candidate_dir in [manual_dir, output_dir]:
             candidates = sorted(candidate_dir.glob("REH_Info*.csv"), reverse=True)
             if candidates:
@@ -91,6 +81,7 @@ def download_reh_info(
                     f"  Scraping yielded no rows. Using cached: {candidates[0]}"
                 )
                 return candidates[0]
+
         logger.error(
             "\n" + "=" * 60 + "\n"
             "REH INFO NOT FOUND — MANUAL ACTION REQUIRED\n"
@@ -106,19 +97,51 @@ def download_reh_info(
         return None
 
     combined.to_csv(dest, index=False)
-    logger.info(f"  ✓ REH_Info_Cleaned.csv saved: {len(combined)} hospitals → {dest}")
+    logger.info(f"  ✓ REH_Info_Cleaned.csv: {len(combined)} hospitals → {dest}")
     return dest
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Source A: UNC Sheps Center
+# Source A: CMS Hospital Enrollments
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _fetch_cms_enrollments() -> pd.DataFrame:
+    """
+    Fetch all REH records from the CMS Hospital Enrollments dataset.
+    Uses keyword search for 'rural emergency hospital' which matches
+    PROVIDER TYPE TEXT = 'PART A PROVIDER - RURAL EMERGENCY HOSPITAL (REH)'.
+    """
+    logger.info("  Fetching CMS Hospital Enrollments — REH records…")
+    try:
+        resp = requests.get(
+            CMS_ENROLLMENTS_URL,
+            params={"size": 1000, "keyword": "rural emergency hospital"},
+            timeout=REQUEST_TIMEOUT,
+        )
+        resp.raise_for_status()
+        records = resp.json()
+        if not isinstance(records, list):
+            logger.warning("  Unexpected response format from CMS Enrollments API.")
+            return pd.DataFrame()
+
+        df = pd.DataFrame(records)
+        logger.info(f"  CMS Enrollments: {len(df):,} REH records")
+        return df
+
+    except Exception as exc:
+        logger.warning(f"  CMS Enrollments fetch failed: {exc}")
+        return pd.DataFrame()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Source B: UNC Sheps Center
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _scrape_sheps_center() -> pd.DataFrame:
     """
-    Scrape the REH list table from the UNC Sheps Center page via Playwright.
-    Returns a DataFrame with columns: Hospital Name, State, REH Conversion Date,
-    Previous Medicare Payment Type, Current Status.
+    Scrape the REH table from the UNC Sheps Center page via Playwright.
+    Returns a DataFrame with Previous Medicare Payment Type and Current Status.
+    Falls back silently to an empty DataFrame on any failure.
     """
     logger.info("  Scraping UNC Sheps Center REH list…")
     try:
@@ -140,17 +163,16 @@ def _playwright_sheps() -> pd.DataFrame:
         )
         page = browser.new_page()
         logger.info(f"  Loading {SHEPS_REH_URL}…")
-        page.goto(SHEPS_REH_URL, wait_until="networkidle", timeout=PLAYWRIGHT_TIMEOUT)
+        page.goto(SHEPS_REH_URL, wait_until="domcontentloaded", timeout=PLAYWRIGHT_TIMEOUT)
+        page.wait_for_timeout(PLAYWRIGHT_WAIT)
 
-        # Wait for the data table to appear
         try:
-            page.wait_for_selector("table", timeout=PLAYWRIGHT_WAIT)
+            page.wait_for_selector("table", timeout=10_000)
         except Exception:
-            logger.warning("  No <table> found on Sheps REH page.")
+            logger.warning("  No <table> found on Sheps REH page after wait.")
             browser.close()
             return pd.DataFrame()
 
-        # Extract all tables on the page and pick the one with REH data
         tables = pd.read_html(page.content())
         browser.close()
 
@@ -158,96 +180,43 @@ def _playwright_sheps() -> pd.DataFrame:
         logger.warning("  No tables parsed from Sheps REH page.")
         return pd.DataFrame()
 
-    # Find the table most likely to contain REH conversion data
+    # Pick the table most likely to have REH conversion data
     reh_table = None
     for tbl in tables:
-        cols_lower = [str(c).lower() for c in tbl.columns]
-        if any(kw in " ".join(cols_lower) for kw in ["hospital", "reh", "conversion", "date", "state"]):
+        cols_lower = " ".join(str(c).lower() for c in tbl.columns)
+        if any(kw in cols_lower for kw in ["hospital", "reh", "conversion", "date", "state"]):
             reh_table = tbl
             break
-
     if reh_table is None:
-        reh_table = tables[0]  # best guess
+        reh_table = tables[0]
 
-    logger.info(f"  Sheps table shape: {reh_table.shape}")
-    logger.debug(f"  Columns: {list(reh_table.columns)}")
-
-    # Normalize column names
     reh_table.columns = [str(c).strip() for c in reh_table.columns]
     rename_map = _infer_sheps_columns(reh_table.columns.tolist())
     reh_table = reh_table.rename(columns=rename_map)
 
-    # Keep only the columns we need
     keep = [c for c in ["Hospital Name", "State", "REH Conversion Date",
                          "Previous Medicare Payment Type", "Current Status"]
             if c in reh_table.columns]
-    reh_table = reh_table[keep].copy()
-    reh_table = reh_table.dropna(how="all")
-
+    reh_table = reh_table[keep].dropna(how="all")
     logger.info(f"  ✓ Sheps Center: {len(reh_table)} REH records")
     return reh_table
 
 
 def _infer_sheps_columns(cols: list[str]) -> dict[str, str]:
-    """
-    Map whatever column names Sheps uses to our standard names.
-    This is intentionally flexible because Sheps may rename columns.
-    """
     mapping: dict[str, str] = {}
     for col in cols:
         cl = col.lower()
-        if "hospital" in cl or "facility" in cl or "name" in cl:
+        if ("hospital" in cl or "facility" in cl) and "name" not in mapping.values():
             mapping[col] = "Hospital Name"
-        elif "state" in cl and "address" not in cl:
+        elif "state" in cl and "address" not in cl and "State" not in mapping.values():
             mapping[col] = "State"
-        elif "date" in cl or "effective" in cl or "conversion" in cl:
+        elif ("date" in cl or "effective" in cl or "conversion" in cl) and "REH Conversion Date" not in mapping.values():
             mapping[col] = "REH Conversion Date"
-        elif "payment" in cl or "previous" in cl or "prior" in cl or "type" in cl:
+        elif ("payment" in cl or "previous" in cl or "prior" in cl or "type" in cl) and "Previous Medicare Payment Type" not in mapping.values():
             mapping[col] = "Previous Medicare Payment Type"
-        elif "status" in cl:
+        elif "status" in cl and "Current Status" not in mapping.values():
             mapping[col] = "Current Status"
     return mapping
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Source B: CMS Provider of Services
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _fetch_pos_for_category(category_code: str) -> pd.DataFrame:
-    """Fetch POS records for a given facility category code via Socrata."""
-    url = POS_SODA_URL
-    params = {
-        "$where": f"PRVDR_CTGRY_CD='{category_code}'",
-        "$select": (
-            "PRVDR_NUM,FAC_NAME,ST_ADR,CITY_NAME,STATE_CD,ZIP_CD,"
-            "PRVDR_CTGRY_CD,PRVDR_CTGRY_SBTYP_CD,"
-            "CRTFCTN_DT,TRMNTN_EXPRTN_DT"
-        ),
-        "$limit": 10_000,
-    }
-    try:
-        resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
-        resp.raise_for_status()
-        df = pd.read_csv(
-            __import__("io").StringIO(resp.text),
-            dtype={"PRVDR_NUM": str, "ZIP_CD": str},
-            low_memory=False,
-        )
-        logger.info(f"  CMS POS category {category_code}: {len(df):,} records")
-        return df
-    except Exception as exc:
-        logger.warning(f"  CMS POS fetch for category {category_code} failed: {exc}")
-        return pd.DataFrame()
-
-
-def _fetch_pos_reh() -> pd.DataFrame:
-    logger.info("  Fetching CMS POS — REH facilities…")
-    return _fetch_pos_for_category(REH_CATEGORY_CODE)
-
-
-def _fetch_pos_cah() -> pd.DataFrame:
-    logger.info("  Fetching CMS POS — CAH facilities (for Pre-REH CCN mapping)…")
-    return _fetch_pos_for_category(CAH_CATEGORY_CODE)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -259,7 +228,6 @@ def _normalize_name(name) -> str:
         return ""
     name = str(name).lower()
     name = re.sub(r"[^\w\s]", " ", name)
-    # Remove common noise words
     for noise in ["hospital", "medical", "center", "health", "regional", "rural",
                   "emergency", "community", "general", "memorial", "critical", "access"]:
         name = name.replace(noise, " ")
@@ -267,90 +235,93 @@ def _normalize_name(name) -> str:
 
 
 def _merge_sources(
+    enrollments_df: pd.DataFrame,
     sheps_df: pd.DataFrame,
-    pos_reh_df: pd.DataFrame,
-    pos_cah_df: pd.DataFrame,
 ) -> pd.DataFrame | None:
     """
-    Merge Sheps Center REH list with CMS POS data.
+    Build the final REH table from CMS Enrollments + Sheps Center data.
 
-    Logic:
-    - pos_reh_df gives us the current REH CCN (PRVDR_NUM) and certification date
-    - pos_cah_df gives us the old CAH CCN for hospitals that changed CCN
-    - sheps_df gives us Previous Medicare Payment Type and Current Status
-    - We match on normalized hospital name + state
+    CMS Enrollments provides:
+        CCN              → Post-REH CCN
+        CAH OR HOSPITAL CCN → Pre-REH CCN
+        REH CONVERSION DATE → REH Conversion Date
+        ORGANIZATION NAME   → Hospital Name
+        STATE               → State
+        REH CONVERSION FLAG → Previous Medicare Payment Type proxy
+
+    Sheps supplements:
+        Previous Medicare Payment Type (exact label)
+        Current Status
     """
-    if pos_reh_df.empty and sheps_df.empty:
+    if enrollments_df.empty and sheps_df.empty:
         return None
 
-    # ── Build REH base from POS ───────────────────────────────────────────────
-    if not pos_reh_df.empty:
-        reh = pos_reh_df.rename(columns={
-            "PRVDR_NUM":           "Post-REH CCN",
-            "FAC_NAME":            "Hospital Name",
-            "STATE_CD":            "State",
-            "CRTFCTN_DT":          "REH Conversion Date",
-            "TRMNTN_EXPRTN_DT":    "_Termination",
-        }).copy()
-        reh["Current Status"] = reh["_Termination"].apply(
-            lambda x: "Active" if pd.isna(x) or str(x).strip() == "" else "Terminated"
+    # ── Build base from CMS Enrollments ──────────────────────────────────────
+    if not enrollments_df.empty:
+        reh = pd.DataFrame()
+        reh["Post-REH CCN"]        = enrollments_df.get("CCN", pd.Series(dtype=str))
+        reh["Pre-REH CCN"]         = enrollments_df.get("CAH OR HOSPITAL CCN", pd.Series(dtype=str))
+        reh["Hospital Name"]       = enrollments_df.get("ORGANIZATION NAME", pd.Series(dtype=str))
+        reh["State"]               = enrollments_df.get("STATE", enrollments_df.get("ENROLLMENT STATE", pd.Series(dtype=str)))
+        reh["REH Conversion Date"] = enrollments_df.get("REH CONVERSION DATE", pd.Series(dtype=str))
+
+        # Derive Previous Medicare Payment Type from conversion flag when available
+        flag_col = enrollments_df.get("REH CONVERSION FLAG", pd.Series(dtype=str))
+        reh["Previous Medicare Payment Type"] = flag_col.map(
+            lambda x: "CAH" if str(x).upper() == "Y" else ("Short-Term Hospital" if pd.notna(x) and x else None)
         )
-        reh = reh[["Post-REH CCN", "Hospital Name", "State",
-                   "REH Conversion Date", "Current Status"]].copy()
+        reh["Current Status"] = "Active"   # all enrollments records are active
+
+        # Clean up CCN columns — drop rows where both CCNs are blank
+        reh["Post-REH CCN"] = pd.to_numeric(reh["Post-REH CCN"], errors="coerce")
+        reh["Pre-REH CCN"]  = pd.to_numeric(reh["Pre-REH CCN"],  errors="coerce")
+        reh = reh.dropna(subset=["Post-REH CCN"])
+
+        logger.info(f"  Enrollments base: {len(reh)} REH hospitals")
     else:
-        reh = pd.DataFrame(columns=["Post-REH CCN", "Hospital Name", "State",
-                                    "REH Conversion Date", "Current Status"])
+        reh = pd.DataFrame(columns=[
+            "Post-REH CCN", "Pre-REH CCN", "Hospital Name", "State",
+            "REH Conversion Date", "Current Status", "Previous Medicare Payment Type",
+        ])
 
-    # ── Merge with Sheps to get Previous Payment Type ─────────────────────────
+    # ── Supplement with Sheps Center ─────────────────────────────────────────
     if not sheps_df.empty and not reh.empty:
-        reh["_name_norm"]   = reh["Hospital Name"].apply(_normalize_name)
-        reh["_state_norm"]  = reh["State"].str.upper().str.strip()
-        sheps_df["_name_norm"]  = sheps_df.get("Hospital Name", pd.Series(dtype=str)).apply(_normalize_name)
-        sheps_df["_state_norm"] = sheps_df.get("State", pd.Series(dtype=str)).str.upper().str.strip()
+        reh["_name_norm"]  = reh["Hospital Name"].apply(_normalize_name)
+        reh["_state_norm"] = reh["State"].str.upper().str.strip()
 
-        reh = reh.merge(
-            sheps_df[["_name_norm", "_state_norm", "Previous Medicare Payment Type"]].dropna(),
-            on=["_name_norm", "_state_norm"],
-            how="left",
-        )
+        sheps_df = sheps_df.copy()
+        if "Hospital Name" in sheps_df.columns:
+            sheps_df["_name_norm"]  = sheps_df["Hospital Name"].apply(_normalize_name)
+        if "State" in sheps_df.columns:
+            sheps_df["_state_norm"] = sheps_df["State"].str.upper().str.strip()
+
+        merge_cols = [c for c in ["_name_norm", "_state_norm", "Previous Medicare Payment Type",
+                                   "Current Status", "REH Conversion Date"]
+                      if c in sheps_df.columns]
+
+        if "_name_norm" in merge_cols and "_state_norm" in merge_cols:
+            reh = reh.merge(
+                sheps_df[merge_cols].dropna(subset=["_name_norm"]),
+                on=["_name_norm", "_state_norm"],
+                how="left",
+                suffixes=("", "_sheps"),
+            )
+            # Prefer Sheps values where CMS value is missing
+            for col in ["Previous Medicare Payment Type", "Current Status", "REH Conversion Date"]:
+                sheps_col = col + "_sheps"
+                if sheps_col in reh.columns:
+                    reh[col] = reh[col].combine_first(reh[sheps_col])
+                    reh = reh.drop(columns=[sheps_col])
+
         reh = reh.drop(columns=["_name_norm", "_state_norm"], errors="ignore")
+
     elif not sheps_df.empty:
-        # POS failed — use Sheps data only (no CCNs)
+        # CMS Enrollments failed — use Sheps data only (no CCNs)
         reh = sheps_df.copy()
         reh["Post-REH CCN"] = None
+        reh["Pre-REH CCN"]  = None
 
-    # ── Try to find Pre-REH CCN from CAH POS ──────────────────────────────────
-    if not pos_cah_df.empty and not reh.empty:
-        cah = pos_cah_df.rename(columns={
-            "PRVDR_NUM": "Pre-REH CCN",
-            "FAC_NAME":  "_cah_name",
-            "STATE_CD":  "_cah_state",
-        }).copy()
-        cah["_name_norm"]  = cah["_cah_name"].apply(_normalize_name)
-        cah["_state_norm"] = cah["_cah_state"].str.upper().str.strip()
-        # Keep only the most recent CAH record per name+state (some have multiple entries)
-        cah = cah.sort_values("CRTFCTN_DT", ascending=False).drop_duplicates(
-            subset=["_name_norm", "_state_norm"], keep="first"
-        )
-
-        if "_name_norm" not in reh.columns:
-            reh["_name_norm"]  = reh["Hospital Name"].apply(_normalize_name)
-            reh["_state_norm"] = reh["State"].str.upper().str.strip()
-
-        reh = reh.merge(
-            cah[["Pre-REH CCN", "_name_norm", "_state_norm"]],
-            on=["_name_norm", "_state_norm"],
-            how="left",
-        )
-        reh = reh.drop(columns=["_name_norm", "_state_norm"], errors="ignore")
-
-    # ── Fill defaults ─────────────────────────────────────────────────────────
-    if "Pre-REH CCN" not in reh.columns:
-        reh["Pre-REH CCN"] = None
-    if "Previous Medicare Payment Type" not in reh.columns:
-        reh["Previous Medicare Payment Type"] = None
-
-    # ── Reorder to match build_dataset.py expectations ────────────────────────
+    # ── Final column ordering ─────────────────────────────────────────────────
     final_cols = [
         "Pre-REH CCN", "Post-REH CCN", "Hospital Name", "State",
         "REH Conversion Date", "Current Status", "Previous Medicare Payment Type",

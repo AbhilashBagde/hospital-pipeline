@@ -18,10 +18,12 @@ Usage:
 """
 
 import argparse
+import json
 import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from datetime import date, datetime
@@ -105,26 +107,29 @@ def run_downloads(years: list[int] | None = None) -> dict:
 
 def run_build_dataset(file_paths: dict) -> Path:
     """
-    Run the build_dataset logic, pointing it at the freshly downloaded files.
-    We import the module's functions rather than subprocess-calling it so that
-    errors surface as Python exceptions with proper tracebacks.
+    Run build_dataset.py as a subprocess with file paths passed via env vars.
+    This avoids the module-reload problem (reload re-executes module-level code,
+    overwriting any patches).
     """
     logger.info("=" * 60)
     logger.info("STEP 4: Building Final_Hospital_Dataset.csv")
     logger.info("=" * 60)
 
-    # Patch the file paths that build_dataset.py uses
-    import build_dataset as bd
+    env = os.environ.copy()
+    env["BD_CMS_FILES"]   = json.dumps({str(yr): str(p) for yr, p in file_paths["cms"].items()})
+    env["BD_NASHP_FILE"]  = str(file_paths["path_nashp"])
+    env["BD_REH_FILE"]    = str(_find_reh_file())
+    env["BD_OUTPUT_FILE"] = str(FINAL_DATASET_PATH)
 
-    # Override the module-level path constants before it runs
-    bd.CMS_FILES = {yr: str(p) for yr, p in file_paths["cms"].items()}
-    bd.NASHP_FILE = str(file_paths["path_nashp"])
-    bd.REH_FILE = str(_find_reh_file())
-    bd.OUTPUT_FILE = str(FINAL_DATASET_PATH)
+    result = subprocess.run(
+        [sys.executable, str(BASE_DIR / "build_dataset.py")],
+        env=env,
+        cwd=str(BASE_DIR),
+    )
+    if result.returncode != 0:
+        logger.error("build_dataset.py exited with non-zero status.")
+        sys.exit(result.returncode)
 
-    # Re-run the build by calling a thin wrapper; build_dataset.py is structured
-    # as a script so we exec its main block after patching paths.
-    _exec_build_dataset()
     logger.info(f"  Final_Hospital_Dataset.csv → {FINAL_DATASET_PATH}")
     return FINAL_DATASET_PATH
 
@@ -142,16 +147,6 @@ def _find_reh_file() -> Path:
         "This file must be committed manually to data/manual/REH_Info_Cleaned.csv\n"
         "It tracks hospitals that converted from CAH to REH status."
     )
-
-
-def _exec_build_dataset():
-    """Execute build_dataset.py as a module with overridden file paths."""
-    import importlib
-    import build_dataset as bd
-
-    # The script body runs at import time; we need to re-execute it.
-    # Since the paths are patched above, we reload the module.
-    importlib.reload(bd)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
