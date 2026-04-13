@@ -23,6 +23,7 @@ Usage:
     path = download_reh_info(output_dir="data/raw")
 """
 
+import io
 import logging
 import re
 from pathlib import Path
@@ -173,7 +174,7 @@ def _playwright_sheps() -> pd.DataFrame:
             browser.close()
             return pd.DataFrame()
 
-        tables = pd.read_html(page.content())
+        tables = pd.read_html(io.StringIO(page.content()))
         browser.close()
 
     if not tables:
