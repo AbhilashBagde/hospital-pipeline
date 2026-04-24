@@ -202,6 +202,67 @@ jobs:
             git commit -m "chore: pipeline run ${{ steps.date.outputs.today }} [skip ci]"
           git push || echo "Push skipped (branch protection or nothing to push)."
 
+      # ── 10b. Push CAH_REH_Baselines.json to capstone_project_1 ───────────────
+      - name: Push baselines JSON to capstone_project_1
+        if: success()
+        env:
+          CAPSTONE_TOKEN: ${{ secrets.CAPSTONE_REPO_TOKEN }}
+        run: |
+          DEST_REPO="AbhilashBagde/capstone_project_1"
+          FILE_PATH="data/output/CAH_REH_Baselines.json"
+          DEST_PATH="CAH_REH_Baselines.json"
+
+          if [ ! -f "$FILE_PATH" ]; then
+            echo "::error::CAH_REH_Baselines.json not found — skipping push"
+            exit 1
+          fi
+
+          # Base64-encode the file for the GitHub Contents API
+          CONTENT=$(base64 -w 0 "$FILE_PATH")
+
+          # Get the current file's SHA (needed for updates; empty string if file is new)
+          SHA=$(curl -s \
+            -H "Authorization: Bearer $CAPSTONE_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$DEST_REPO/contents/$DEST_PATH" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || echo "")
+
+          # Build JSON payload
+          TODAY=$(date +%Y-%m-%d)
+          if [ -n "$SHA" ]; then
+            PAYLOAD=$(python3 -c "
+          import json, sys
+          print(json.dumps({
+            'message': 'chore: update CAH_REH_Baselines.json from pipeline run $TODAY [skip ci]',
+            'content': sys.argv[1],
+            'sha':     sys.argv[2],
+          }))" "$CONTENT" "$SHA")
+          else
+            PAYLOAD=$(python3 -c "
+          import json, sys
+          print(json.dumps({
+            'message': 'chore: add CAH_REH_Baselines.json from pipeline run $TODAY [skip ci]',
+            'content': sys.argv[1],
+          }))" "$CONTENT")
+          fi
+
+          # Push via GitHub Contents API
+          HTTP_STATUS=$(curl -s -o /tmp/push_response.json -w "%{http_code}" \
+            -X PUT \
+            -H "Authorization: Bearer $CAPSTONE_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/$DEST_REPO/contents/$DEST_PATH" \
+            -d "$PAYLOAD")
+
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "201" ]; then
+            echo "✓ CAH_REH_Baselines.json pushed to $DEST_REPO (HTTP $HTTP_STATUS)"
+          else
+            echo "::error::Push failed (HTTP $HTTP_STATUS)"
+            cat /tmp/push_response.json
+            exit 1
+          fi
+
       # ── 11. Surface failure details ────────────────────────────────────────────
       - name: Report failure
         if: failure()
