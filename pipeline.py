@@ -44,8 +44,9 @@ ARCHIVE_DIR = BASE_DIR / "data" / "archive"
 for d in (DATA_RAW, DATA_MANUAL, DATA_OUT, ARCHIVE_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
-FINAL_DATASET_PATH = DATA_OUT / "Final_Hospital_Dataset.csv"
-SST_V3_PATH        = DATA_OUT / "SST_v3.csv"
+FINAL_DATASET_PATH  = DATA_OUT / "Final_Hospital_Dataset.csv"
+SST_V3_PATH         = DATA_OUT / "SST_v3.csv"
+BASELINES_JSON_PATH = DATA_OUT / "CAH_REH_Baselines.json"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -107,29 +108,26 @@ def run_downloads(years: list[int] | None = None) -> dict:
 
 def run_build_dataset(file_paths: dict) -> Path:
     """
-    Run build_dataset.py as a subprocess with file paths passed via env vars.
-    This avoids the module-reload problem (reload re-executes module-level code,
-    overwriting any patches).
+    Run the build_dataset logic, pointing it at the freshly downloaded files.
+    We import the module's functions rather than subprocess-calling it so that
+    errors surface as Python exceptions with proper tracebacks.
     """
     logger.info("=" * 60)
     logger.info("STEP 4: Building Final_Hospital_Dataset.csv")
     logger.info("=" * 60)
 
-    env = os.environ.copy()
-    env["BD_CMS_FILES"]   = json.dumps({str(yr): str(p) for yr, p in file_paths["cms"].items()})
-    env["BD_NASHP_FILE"]  = str(file_paths["path_nashp"])
-    env["BD_REH_FILE"]    = str(_find_reh_file())
-    env["BD_OUTPUT_FILE"] = str(FINAL_DATASET_PATH)
+    # Patch the file paths that build_dataset.py uses
+    import build_dataset as bd
 
-    result = subprocess.run(
-        [sys.executable, str(BASE_DIR / "build_dataset.py")],
-        env=env,
-        cwd=str(BASE_DIR),
-    )
-    if result.returncode != 0:
-        logger.error("build_dataset.py exited with non-zero status.")
-        sys.exit(result.returncode)
+    # Override the module-level path constants before it runs
+    bd.CMS_FILES = {yr: str(p) for yr, p in file_paths["cms"].items()}
+    bd.NASHP_FILE = str(file_paths["path_nashp"])
+    bd.REH_FILE = str(_find_reh_file())
+    bd.OUTPUT_FILE = str(FINAL_DATASET_PATH)
 
+    # Re-run the build by calling a thin wrapper; build_dataset.py is structured
+    # as a script so we exec its main block after patching paths.
+    _exec_build_dataset()
     logger.info(f"  Final_Hospital_Dataset.csv → {FINAL_DATASET_PATH}")
     return FINAL_DATASET_PATH
 
@@ -149,35 +147,170 @@ def _find_reh_file() -> Path:
     )
 
 
+def _exec_build_dataset():
+    """Execute build_dataset.py as a module with overridden file paths."""
+    import importlib
+    import build_dataset as bd
+
+    # The script body runs at import time; we need to re-execute it.
+    # Since the paths are patched above, we reload the module.
+    importlib.reload(bd)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 5: Add 340B enrollment flag → SST_v3.csv
 # ─────────────────────────────────────────────────────────────────────────────
 
 def run_340b_matching(path_final: Path, path_340b: Path) -> Path:
     """
-    Match hospitals to 340B covered entities using TF-IDF + embedding approach
-    from SST_update.ipynb. Saves result as SST_v3.csv.
+    Match hospitals to 340B covered entities. Dispatches to CCN-based
+    date-overlap matching when the file is the OPAIS Export format (has a
+    'Medicare Provider Number' column in the 'Covered Entity Details' sheet);
+    otherwise falls back to TF-IDF + optional OpenAI embedding rerank.
+    Saves result as SST_v3.csv.
     """
     logger.info("=" * 60)
     logger.info("STEP 5: Matching 340B enrollment flags")
     logger.info("=" * 60)
 
-    import numpy as np
     import pandas as pd
-    import re as _re
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
 
-    # ── Load data ─────────────────────────────────────────────────────────────
+    HOSPITAL_ENTITY_TYPES = {"CAH", "SCH", "DSH", "PED", "CAN", "RRC", "SOL"}
+
     logger.info("  Loading Final_Hospital_Dataset…")
     sst_df = pd.read_csv(path_final, dtype=str, low_memory=False)
     logger.info(f"  SST rows: {len(sst_df):,}")
 
-    logger.info("  Loading 340B entity file…")
-    entity_df = pd.read_excel(path_340b, dtype=str)
-    logger.info(f"  340B rows: {len(entity_df):,}")
+    # ── Detect 340B file format ───────────────────────────────────────────────
+    # Export format : sheet='Covered Entity Details', skiprows=4, has 'Medicare Provider Number'
+    # Daily format  : sheet='Covered Entities', no skiprows, name/address columns only
+    entity_df = None
+    use_ccn = False
+    try:
+        entity_df = pd.read_excel(
+            path_340b, sheet_name="Covered Entity Details", dtype=str, skiprows=4
+        )
+        entity_df = entity_df[entity_df["Entity Type"].isin(HOSPITAL_ENTITY_TYPES)].copy()
+        use_ccn = "Medicare Provider Number" in entity_df.columns
+    except Exception:
+        pass
 
-    # ── Text normalization ────────────────────────────────────────────────────
+    if use_ccn:
+        logger.info("  OPAIS Export format detected — using CCN-based date-overlap matching.")
+        logger.info(f"  340B hospital rows: {len(entity_df):,}")
+        return _run_340b_ccn(sst_df, entity_df)
+
+    # Fall back to daily download format
+    logger.info("  Daily download format — using TF-IDF name-similarity matching.")
+    if entity_df is None:
+        try:
+            entity_df = pd.read_excel(path_340b, sheet_name="Covered Entities", dtype=str)
+        except Exception:
+            entity_df = pd.read_excel(path_340b, dtype=str)
+    logger.info(f"  340B rows: {len(entity_df):,}")
+    return _run_340b_tfidf(sst_df, entity_df)
+
+
+def _run_340b_ccn(sst_df, entity_df) -> Path:
+    """
+    CCN-based date-overlap matching (notebook SST_340B_addition.ipynb approach).
+    Requires entity_df to have 'Medicare Provider Number', 'Participating Start Date',
+    'Termination Date' columns.
+    """
+    import pandas as pd
+    from collections import defaultdict
+    from dateutil import parser as dateparser
+
+    def to_ccn6(val):
+        if pd.isna(val):
+            return None
+        s = str(val).strip().split(".")[0]
+        return s.zfill(6)
+
+    def parse_date(val):
+        if pd.isna(val) or str(val).strip() == "":
+            return None
+        try:
+            return dateparser.parse(str(val)).date()
+        except Exception:
+            return None
+
+    sst_df = sst_df.copy()
+    sst_df["CCN6"] = sst_df["CCN"].apply(to_ccn6)
+    entity_df["CCN6"] = entity_df["Medicare Provider Number"].apply(to_ccn6)
+
+    # SST fiscal year: NASHP preferred, CMS fallback
+    sst_df["_fy_begin"] = sst_df.apply(
+        lambda r: parse_date(r.get("FY_Begin_NASHP"))
+        if r.get("Data_Source") != "CMS only"
+        else parse_date(r.get("FY_Begin_CMS")),
+        axis=1,
+    )
+    sst_df["_fy_end"] = sst_df.apply(
+        lambda r: parse_date(r.get("FY_End_NASHP"))
+        if r.get("Data_Source") != "CMS only"
+        else parse_date(r.get("FY_End_CMS")),
+        axis=1,
+    )
+
+    entity_df["_start"] = entity_df["Participating Start Date"].apply(parse_date)
+    entity_df["_term"]  = entity_df["Termination Date"].apply(parse_date)
+
+    # Build CCN → list of (enroll_start, term) lookup
+    ccn_periods: dict = {}
+    from collections import defaultdict
+    ccn_periods = defaultdict(list)
+    for _, row in entity_df.iterrows():
+        if row["CCN6"]:
+            ccn_periods[row["CCN6"]].append((row["_start"], row["_term"]))
+
+    def overlaps(fy_begin, fy_end, enroll_start, term_date):
+        if fy_begin is None or fy_end is None:
+            return True   # can't rule out overlap without dates
+        if enroll_start is None:
+            return True   # no start date → assume enrolled
+        if term_date is not None and term_date < fy_begin:
+            return False  # terminated before FY started
+        if enroll_start > fy_end:
+            return False  # enrolled after FY ended
+        return True
+
+    labels = []
+    for _, row in sst_df.iterrows():
+        enrolled = 0
+        for (start, term) in ccn_periods.get(row["CCN6"], []):
+            if overlaps(row["_fy_begin"], row["_fy_end"], start, term):
+                enrolled = 1
+                break
+        labels.append(enrolled)
+
+    sst_df["Is_340B_Enrolled"] = labels
+    sst_df["CCN"] = sst_df["CCN6"]   # overwrite with zero-padded string
+    sst_df = sst_df.drop(columns=["CCN6", "_fy_begin", "_fy_end"])
+
+    enrolled_count = sum(labels)
+    unique_ccns    = sst_df["CCN"].dropna().unique()
+    matched_ccns   = [c for c in unique_ccns if c in ccn_periods]
+    logger.info(f"  340B enrolled: {enrolled_count:,} / {len(sst_df):,} rows")
+    logger.info(
+        f"  CCNs matched: {len(matched_ccns):,} / {len(unique_ccns):,} unique "
+        f"({len(matched_ccns)/max(len(unique_ccns),1):.1%})"
+    )
+
+    sst_df.to_csv(SST_V3_PATH, index=False)
+    logger.info(f"  ✓ SST_v3.csv → {SST_V3_PATH}")
+    return SST_V3_PATH
+
+
+def _run_340b_tfidf(sst_df, entity_df) -> Path:
+    """
+    TF-IDF name-similarity matching with optional OpenAI embedding rerank.
+    Used when the 340B file is the daily download format (no CCN column).
+    """
+    import pandas as pd
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+
     NOISE = re.compile(r"\b(hospital|center|medical|health|system|regional|community)\b")
 
     def normalize(text):
@@ -188,23 +321,20 @@ def run_340b_matching(path_final: Path, path_340b: Path) -> Path:
         return re.sub(r"\s+", " ", text).strip()
 
     def build_sst_text(row):
-        return normalize(f"{row.get('Hospital_Name','')} "
-                         f"{row.get('City','')} {row.get('State','')} "
-                         f"{row.get('Address','')}")
+        return normalize(
+            f"{row.get('Hospital_Name','')} {row.get('City','')} "
+            f"{row.get('State','')} {row.get('Address','')}"
+        )
 
     def build_entity_text(row):
-        return normalize(f"{row.get('Entity Name','')} "
-                         f"{row.get('Street City','')} {row.get('Street State','')} "
-                         f"{row.get('Street Address 1','')}")
+        return normalize(
+            f"{row.get('Entity Name','')} {row.get('Street City','')} "
+            f"{row.get('Street State','')} {row.get('Street Address 1','')}"
+        )
 
-    sst_texts    = [build_sst_text(row)    for _, row in sst_df.iterrows()]
-    entity_texts = [build_entity_text(row) for _, row in entity_df.iterrows()]
+    sst_texts    = [NOISE.sub("", build_sst_text(r)).strip()    for _, r in sst_df.iterrows()]
+    entity_texts = [NOISE.sub("", build_entity_text(r)).strip() for _, r in entity_df.iterrows()]
 
-    # Strip high-frequency noise words before TF-IDF
-    sst_texts    = [NOISE.sub("", t).strip() for t in sst_texts]
-    entity_texts = [NOISE.sub("", t).strip() for t in entity_texts]
-
-    # ── TF-IDF shortlist ──────────────────────────────────────────────────────
     logger.info("  Building TF-IDF shortlists…")
     TFIDF_TOP_K = 10
     corpus = sst_texts + entity_texts
@@ -216,79 +346,58 @@ def run_340b_matching(path_final: Path, path_340b: Path) -> Path:
     candidates: list[list[int]] = []
     chunk = 500
     for i in range(0, len(sst_texts), chunk):
-        sims = cosine_similarity(sst_mat[i: i + chunk], entity_mat)
+        sims = cosine_similarity(sst_mat[i : i + chunk], entity_mat)
         for row_sims in sims:
-            top_k = row_sims.argsort()[-TFIDF_TOP_K:][::-1].tolist()
-            candidates.append(top_k)
+            candidates.append(row_sims.argsort()[-TFIDF_TOP_K:][::-1].tolist())
 
-    # ── Embedding rerank via OpenAI (optional) ────────────────────────────────
-    # If OPENAI_API_KEY is not set, we skip embedding and use TF-IDF score alone.
     api_key = os.environ.get("OPENAI_API_KEY")
-    EMBED_THRESHOLD = 0.82
-
+    EMBED_THRESHOLD  = 0.82
+    TFIDF_THRESHOLD  = 0.40
     labels: list[int] = []
 
     if api_key:
         logger.info("  OPENAI_API_KEY found — using embedding rerank…")
         from openai import OpenAI
+        import numpy as np_
         client = OpenAI(api_key=api_key)
 
-        def embed_batch(texts: list[str]) -> list:
-            resp = client.embeddings.create(
-                model="text-embedding-3-small",
-                input=texts,
-            )
+        def embed_batch(texts):
+            resp = client.embeddings.create(model="text-embedding-3-small", input=texts)
             return [e.embedding for e in resp.data]
 
-        # Build entity name-only embeddings once
-        entity_name_texts = [normalize(str(row.get("Entity Name", "")))
-                             for _, row in entity_df.iterrows()]
-        sst_name_texts    = [normalize(str(row.get("Hospital_Name", "")))
-                             for _, row in sst_df.iterrows()]
+        entity_name_texts = [normalize(str(r.get("Entity Name", ""))) for _, r in entity_df.iterrows()]
+        sst_name_texts    = [normalize(str(r.get("Hospital_Name", ""))) for _, r in sst_df.iterrows()]
 
         entity_embeddings = []
         for i in range(0, len(entity_name_texts), 512):
-            entity_embeddings.extend(embed_batch(entity_name_texts[i:i+512]))
+            entity_embeddings.extend(embed_batch(entity_name_texts[i : i + 512]))
             time.sleep(0.05)
-
-        import numpy as np_
         entity_embed_mat = np_.array(entity_embeddings)
 
-        for i, (sst_row, cand_indices) in enumerate(zip(sst_df.itertuples(), candidates)):
+        for i, (_, cand_indices) in enumerate(zip(sst_df.itertuples(), candidates)):
             if not cand_indices:
                 labels.append(0)
                 continue
-
-            sst_emb = embed_batch([sst_name_texts[i]])[0]
-            sst_vec = np_.array(sst_emb).reshape(1, -1)
+            sst_vec  = np_.array(embed_batch([sst_name_texts[i]])[0]).reshape(1, -1)
             cand_mat = entity_embed_mat[cand_indices]
-
-            sims = cosine_similarity(sst_vec, cand_mat)[0]
-            best_sim = sims.max()
+            best_sim = cosine_similarity(sst_vec, cand_mat)[0].max()
             labels.append(1 if best_sim >= EMBED_THRESHOLD else 0)
-
             if i % 500 == 0:
                 logger.info(f"    Matched {i}/{len(sst_df):,}…")
             time.sleep(0.05)
-
     else:
         logger.info(
-            "  OPENAI_API_KEY not set — using TF-IDF score only "
-            "(slightly lower accuracy; set secret for full matching)."
+            "  OPENAI_API_KEY not set — TF-IDF score only "
+            "(set key for higher accuracy via embedding rerank)."
         )
-        TFIDF_THRESHOLD = 0.40
         for i, cand_indices in enumerate(candidates):
             if not cand_indices:
                 labels.append(0)
                 continue
-            chunk_start = (i // chunk) * chunk
-            row_idx = i - chunk_start
-            sims = cosine_similarity(
-                sst_mat[i: i + 1], entity_mat[cand_indices]
-            )[0]
+            sims = cosine_similarity(sst_mat[i : i + 1], entity_mat[cand_indices])[0]
             labels.append(1 if sims.max() >= TFIDF_THRESHOLD else 0)
 
-    # ── Save output ───────────────────────────────────────────────────────────
+    sst_df = sst_df.copy()
     sst_df["Is_340B_Enrolled"] = labels
     enrolled_count = sum(labels)
     logger.info(f"  340B enrolled: {enrolled_count:,} / {len(sst_df):,} rows")
@@ -299,22 +408,52 @@ def run_340b_matching(path_final: Path, path_340b: Path) -> Path:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STEP 6: Archive outputs
+# STEP 7: Build CAH_REH_Baselines.json
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_build_baselines(sst_path: Path) -> Path:
+    """Run build_baselines_json.py to produce CAH_REH_Baselines.json."""
+    logger.info("  Running build_baselines_json.py…")
+    result = subprocess.run(
+        [sys.executable,
+         str(BASE_DIR / "build_baselines_json.py"),
+         str(sst_path),
+         str(BASELINES_JSON_PATH)],
+        capture_output=True, text=True, cwd=str(BASE_DIR),
+    )
+    for line in result.stdout.splitlines():
+        logger.info(f"  {line}")
+    if result.returncode != 0:
+        logger.error(result.stderr)
+        raise RuntimeError("build_baselines_json.py failed")
+    logger.info(f"  ✓ CAH_REH_Baselines.json → {BASELINES_JSON_PATH}")
+    return BASELINES_JSON_PATH
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 8: Archive outputs
 # ─────────────────────────────────────────────────────────────────────────────
 
 def archive_outputs():
-    """Copy SST_v3.csv to archive with a timestamp suffix."""
+    """Copy SST_v3.csv and CAH_REH_Baselines.json to archive with a timestamp suffix."""
     today = date.today().strftime("%Y%m%d")
-    archive_path = ARCHIVE_DIR / f"SST_v3_{today}.csv"
-    shutil.copy2(SST_V3_PATH, archive_path)
-    logger.info(f"  Archived: {archive_path}")
 
-    # Write a pipeline run manifest
+    archive_csv = ARCHIVE_DIR / f"SST_v3_{today}.csv"
+    shutil.copy2(SST_V3_PATH, archive_csv)
+    logger.info(f"  Archived: {archive_csv}")
+
+    if BASELINES_JSON_PATH.exists():
+        archive_json = ARCHIVE_DIR / f"CAH_REH_Baselines_{today}.json"
+        shutil.copy2(BASELINES_JSON_PATH, archive_json)
+        logger.info(f"  Archived: {archive_json}")
+
     manifest = DATA_OUT / "pipeline_manifest.txt"
     with manifest.open("w") as f:
         f.write(f"Pipeline run: {datetime.now().isoformat()}\n")
         f.write(f"SST_v3.csv rows: {_count_csv_rows(SST_V3_PATH):,}\n")
-        f.write(f"Archive: {archive_path.name}\n")
+        f.write(f"Archive: {archive_csv.name}\n")
+        if BASELINES_JSON_PATH.exists():
+            f.write(f"CAH_REH_Baselines.json: yes\n")
     logger.info(f"  Manifest: {manifest}")
 
 
@@ -363,6 +502,7 @@ def main():
         logger.info("  Would scrape NASHP hospital cost tool page")
         logger.info("  Would run build_dataset.py → Final_Hospital_Dataset.csv")
         logger.info("  Would run 340B matching → SST_v3.csv")
+        logger.info("  Would run build_baselines_json.py → CAH_REH_Baselines.json")
         logger.info("  Would archive outputs")
         return
 
@@ -401,9 +541,15 @@ def main():
     # ── 340B matching phase ───────────────────────────────────────────────────
     run_340b_matching(path_final, file_paths["path_340b"])
 
+    # ── Baselines JSON ────────────────────────────────────────────────────────
+    logger.info("=" * 60)
+    logger.info("STEP 7: Building CAH_REH_Baselines.json")
+    logger.info("=" * 60)
+    run_build_baselines(SST_V3_PATH)
+
     # ── Archive ───────────────────────────────────────────────────────────────
     logger.info("=" * 60)
-    logger.info("STEP 6: Archiving outputs")
+    logger.info("STEP 8: Archiving outputs")
     logger.info("=" * 60)
     archive_outputs()
 

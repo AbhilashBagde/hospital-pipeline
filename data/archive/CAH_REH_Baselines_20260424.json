@@ -1,0 +1,2962 @@
+{
+  "generated": "2026-04-24T00:20:17",
+  "source": "/Users/abhilashbagde/hospital-pipeline/data/output/SST_v3.csv",
+  "CAH": {
+    "2011": {
+      "n_hospitals": 1305,
+      "Days_Cash_on_Hand": {
+        "p25": 7.2282,
+        "median": 24.1613,
+        "p75": 56.7673,
+        "mean": 45.9863,
+        "n_valid": 1265
+      },
+      "Current_Ratio": {
+        "p25": 1.4446,
+        "median": 2.3213,
+        "p75": 3.7722,
+        "mean": 3.2977,
+        "n_valid": 1278
+      },
+      "Debt_Ratio": {
+        "p25": 0.2218,
+        "median": 0.4305,
+        "p75": 0.6748,
+        "mean": 0.455,
+        "n_valid": 1278
+      },
+      "Medicare_Pct_Days": {
+        "p25": 52.9347,
+        "median": 65.5076,
+        "p75": 77.0074,
+        "mean": 63.0258,
+        "n_valid": 1299
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 2.0204,
+        "median": 4.5838,
+        "p75": 9.8878,
+        "mean": 7.9262,
+        "n_valid": 1254
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 93.5749,
+        "median": 118.7674,
+        "p75": 148.0787,
+        "mean": 124.5782,
+        "n_valid": 1276
+      },
+      "Labor_Cost_Pct": {
+        "p25": 44.0077,
+        "median": 48.9975,
+        "p75": 54.758,
+        "mean": 49.7602,
+        "n_valid": 1305
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4625,
+        "median": 1.0916,
+        "p75": 2.2909,
+        "mean": 1.8547,
+        "n_valid": 1143
+      },
+      "Rev_per_Discharge": {
+        "p25": 27257.7389,
+        "median": 38691.1524,
+        "p75": 52839.5419,
+        "mean": 67686.3421,
+        "n_valid": 1278
+      },
+      "Cost_per_Discharge": {
+        "p25": 24006.0012,
+        "median": 33669.7563,
+        "p75": 48291.1541,
+        "mean": 69036.9251,
+        "n_valid": 1303
+      },
+      "Total_Discharges": {
+        "p25": 219.0,
+        "median": 423.0,
+        "p75": 801.0,
+        "mean": 559.4927,
+        "n_valid": 1303
+      },
+      "Num_Beds": {
+        "p25": 20.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 22.0331,
+        "n_valid": 1301
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 9028598.25,
+        "median": 15427615.5,
+        "p75": 25531515.75,
+        "mean": 20516590.7117,
+        "n_valid": 1280
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9755,
+        "n_valid": 1305
+      }
+    },
+    "2012": {
+      "n_hospitals": 1333,
+      "Days_Cash_on_Hand": {
+        "p25": 7.4839,
+        "median": 26.9349,
+        "p75": 62.0574,
+        "mean": 51.2723,
+        "n_valid": 1309
+      },
+      "Current_Ratio": {
+        "p25": 1.3604,
+        "median": 2.3675,
+        "p75": 3.8177,
+        "mean": 14.8146,
+        "n_valid": 1317
+      },
+      "Debt_Ratio": {
+        "p25": 0.2301,
+        "median": 0.4349,
+        "p75": 0.6705,
+        "mean": 0.5361,
+        "n_valid": 1318
+      },
+      "Medicare_Pct_Days": {
+        "p25": 51.6445,
+        "median": 64.8504,
+        "p75": 76.716,
+        "mean": 62.3741,
+        "n_valid": 1333
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.6656,
+        "median": 4.2831,
+        "p75": 9.5487,
+        "mean": 7.7177,
+        "n_valid": 1277
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 97.8751,
+        "median": 122.6635,
+        "p75": 154.2596,
+        "mean": 130.504,
+        "n_valid": 1318
+      },
+      "Labor_Cost_Pct": {
+        "p25": 43.729,
+        "median": 48.6974,
+        "p75": 54.3341,
+        "mean": 49.496,
+        "n_valid": 1333
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4776,
+        "median": 1.1221,
+        "p75": 2.4793,
+        "mean": 2.0783,
+        "n_valid": 1219
+      },
+      "Rev_per_Discharge": {
+        "p25": 29249.8524,
+        "median": 41850.8141,
+        "p75": 60215.6093,
+        "mean": 84437.7915,
+        "n_valid": 1321
+      },
+      "Cost_per_Discharge": {
+        "p25": 26770.559,
+        "median": 37163.8662,
+        "p75": 55968.9666,
+        "mean": 75699.761,
+        "n_valid": 1332
+      },
+      "Total_Discharges": {
+        "p25": 195.0,
+        "median": 402.5,
+        "p75": 759.25,
+        "mean": 525.723,
+        "n_valid": 1332
+      },
+      "Num_Beds": {
+        "p25": 20.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.9287,
+        "n_valid": 1332
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 9312497.5,
+        "median": 15756801.0,
+        "p75": 25994894.75,
+        "mean": 21139323.2859,
+        "n_valid": 1322
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9737,
+        "n_valid": 1333
+      }
+    },
+    "2013": {
+      "n_hospitals": 1330,
+      "Days_Cash_on_Hand": {
+        "p25": 8.3607,
+        "median": 28.0642,
+        "p75": 66.2621,
+        "mean": 60.7437,
+        "n_valid": 1308
+      },
+      "Current_Ratio": {
+        "p25": 1.4032,
+        "median": 2.3264,
+        "p75": 3.8272,
+        "mean": 3.736,
+        "n_valid": 1316
+      },
+      "Debt_Ratio": {
+        "p25": 0.2272,
+        "median": 0.4266,
+        "p75": 0.6669,
+        "mean": 0.5549,
+        "n_valid": 1317
+      },
+      "Medicare_Pct_Days": {
+        "p25": 50.8831,
+        "median": 65.0292,
+        "p75": 76.3604,
+        "mean": 61.8843,
+        "n_valid": 1330
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.5765,
+        "median": 4.1623,
+        "p75": 8.9623,
+        "mean": 7.4914,
+        "n_valid": 1224
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 97.8644,
+        "median": 125.891,
+        "p75": 159.2674,
+        "mean": 134.3764,
+        "n_valid": 1320
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.9628,
+        "median": 48.7198,
+        "p75": 54.456,
+        "mean": 49.1762,
+        "n_valid": 1330
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4464,
+        "median": 1.0927,
+        "p75": 2.4764,
+        "mean": 1.9534,
+        "n_valid": 1246
+      },
+      "Rev_per_Discharge": {
+        "p25": 32517.2757,
+        "median": 45763.5751,
+        "p75": 64403.7046,
+        "mean": 87932.2502,
+        "n_valid": 1320
+      },
+      "Cost_per_Discharge": {
+        "p25": 29768.0635,
+        "median": 40782.4459,
+        "p75": 62320.3712,
+        "mean": 86544.4452,
+        "n_valid": 1330
+      },
+      "Total_Discharges": {
+        "p25": 174.0,
+        "median": 374.0,
+        "p75": 720.5,
+        "mean": 498.6286,
+        "n_valid": 1330
+      },
+      "Num_Beds": {
+        "p25": 20.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.8383,
+        "n_valid": 1330
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 9736601.5,
+        "median": 16133931.5,
+        "p75": 26590497.75,
+        "mean": 21680417.8288,
+        "n_valid": 1320
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9774,
+        "n_valid": 1330
+      }
+    },
+    "2014": {
+      "n_hospitals": 1335,
+      "Days_Cash_on_Hand": {
+        "p25": 8.6631,
+        "median": 31.9169,
+        "p75": 70.8047,
+        "mean": 58.9178,
+        "n_valid": 1310
+      },
+      "Current_Ratio": {
+        "p25": 1.3693,
+        "median": 2.2927,
+        "p75": 3.7311,
+        "mean": 3.339,
+        "n_valid": 1318
+      },
+      "Debt_Ratio": {
+        "p25": 0.2416,
+        "median": 0.4483,
+        "p75": 0.6826,
+        "mean": 0.527,
+        "n_valid": 1319
+      },
+      "Medicare_Pct_Days": {
+        "p25": 51.2634,
+        "median": 64.2834,
+        "p75": 76.0459,
+        "mean": 61.9305,
+        "n_valid": 1333
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.6363,
+        "median": 4.1092,
+        "p75": 9.2912,
+        "mean": 7.4704,
+        "n_valid": 1210
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 101.9451,
+        "median": 131.6234,
+        "p75": 167.3489,
+        "mean": 140.0285,
+        "n_valid": 1319
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.996,
+        "median": 48.1288,
+        "p75": 54.571,
+        "mean": 49.0381,
+        "n_valid": 1334
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3439,
+        "median": 0.8822,
+        "p75": 1.9646,
+        "mean": 1.7186,
+        "n_valid": 1240
+      },
+      "Rev_per_Discharge": {
+        "p25": 34930.9033,
+        "median": 49157.3828,
+        "p75": 71574.1799,
+        "mean": 110570.9852,
+        "n_valid": 1321
+      },
+      "Cost_per_Discharge": {
+        "p25": 31698.1343,
+        "median": 44299.6701,
+        "p75": 68404.9588,
+        "mean": 107239.3603,
+        "n_valid": 1333
+      },
+      "Total_Discharges": {
+        "p25": 170.0,
+        "median": 362.0,
+        "p75": 694.0,
+        "mean": 492.174,
+        "n_valid": 1333
+      },
+      "Num_Beds": {
+        "p25": 19.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 22.3501,
+        "n_valid": 1334
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 10044659.25,
+        "median": 17151691.5,
+        "p75": 28162914.5,
+        "mean": 22941754.6301,
+        "n_valid": 1322
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9798,
+        "n_valid": 1335
+      }
+    },
+    "2015": {
+      "n_hospitals": 1338,
+      "Days_Cash_on_Hand": {
+        "p25": 8.6918,
+        "median": 33.0302,
+        "p75": 72.8811,
+        "mean": 61.0598,
+        "n_valid": 1315
+      },
+      "Current_Ratio": {
+        "p25": 1.3777,
+        "median": 2.3968,
+        "p75": 3.9452,
+        "mean": 5.0996,
+        "n_valid": 1323
+      },
+      "Debt_Ratio": {
+        "p25": 0.2437,
+        "median": 0.4495,
+        "p75": 0.6899,
+        "mean": 0.5172,
+        "n_valid": 1326
+      },
+      "Medicare_Pct_Days": {
+        "p25": 50.3638,
+        "median": 63.9091,
+        "p75": 76.1967,
+        "mean": 61.6843,
+        "n_valid": 1336
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.5065,
+        "median": 3.8312,
+        "p75": 9.0984,
+        "mean": 7.533,
+        "n_valid": 1190
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 105.2478,
+        "median": 134.5,
+        "p75": 172.4088,
+        "mean": 144.5535,
+        "n_valid": 1328
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.6041,
+        "median": 48.4109,
+        "p75": 54.1505,
+        "mean": 48.814,
+        "n_valid": 1338
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3016,
+        "median": 0.7973,
+        "p75": 1.9489,
+        "mean": 1.732,
+        "n_valid": 1230
+      },
+      "Rev_per_Discharge": {
+        "p25": 37630.1814,
+        "median": 53202.2335,
+        "p75": 79221.8922,
+        "mean": 108130.4179,
+        "n_valid": 1328
+      },
+      "Cost_per_Discharge": {
+        "p25": 33971.6319,
+        "median": 47901.8883,
+        "p75": 77019.6302,
+        "mean": 96749.3331,
+        "n_valid": 1337
+      },
+      "Total_Discharges": {
+        "p25": 152.0,
+        "median": 352.0,
+        "p75": 684.0,
+        "mean": 481.9147,
+        "n_valid": 1337
+      },
+      "Num_Beds": {
+        "p25": 19.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.7145,
+        "n_valid": 1338
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 10560452.0,
+        "median": 18286966.0,
+        "p75": 29936894.0,
+        "mean": 24569111.0918,
+        "n_valid": 1329
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9783,
+        "n_valid": 1338
+      }
+    },
+    "2016": {
+      "n_hospitals": 1339,
+      "Days_Cash_on_Hand": {
+        "p25": 7.3957,
+        "median": 31.3258,
+        "p75": 76.9935,
+        "mean": 56.9938,
+        "n_valid": 1317
+      },
+      "Current_Ratio": {
+        "p25": 1.308,
+        "median": 2.4069,
+        "p75": 4.1272,
+        "mean": 231.1183,
+        "n_valid": 1325
+      },
+      "Debt_Ratio": {
+        "p25": 0.2362,
+        "median": 0.4535,
+        "p75": 0.7258,
+        "mean": 0.5752,
+        "n_valid": 1326
+      },
+      "Medicare_Pct_Days": {
+        "p25": 50.763,
+        "median": 64.5686,
+        "p75": 76.1404,
+        "mean": 61.8607,
+        "n_valid": 1336
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.1604,
+        "median": 3.1991,
+        "p75": 8.2466,
+        "mean": 7.0117,
+        "n_valid": 1172
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 108.5086,
+        "median": 138.8618,
+        "p75": 179.0594,
+        "mean": 150.1869,
+        "n_valid": 1329
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.4635,
+        "median": 48.2272,
+        "p75": 54.0667,
+        "mean": 48.5405,
+        "n_valid": 1339
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3481,
+        "median": 0.8292,
+        "p75": 2.1202,
+        "mean": 1.927,
+        "n_valid": 1252
+      },
+      "Rev_per_Discharge": {
+        "p25": 41840.8722,
+        "median": 58799.7713,
+        "p75": 87724.1232,
+        "mean": 116096.5398,
+        "n_valid": 1327
+      },
+      "Cost_per_Discharge": {
+        "p25": 38379.115,
+        "median": 53270.2944,
+        "p75": 83737.358,
+        "mean": 111323.9742,
+        "n_valid": 1337
+      },
+      "Total_Discharges": {
+        "p25": 145.0,
+        "median": 335.0,
+        "p75": 651.0,
+        "mean": 462.1047,
+        "n_valid": 1337
+      },
+      "Num_Beds": {
+        "p25": 19.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 24.5265,
+        "n_valid": 1339
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 10903297.0,
+        "median": 18685394.0,
+        "p75": 30745122.0,
+        "mean": 25676169.2506,
+        "n_valid": 1329
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9776,
+        "n_valid": 1339
+      }
+    },
+    "2017": {
+      "n_hospitals": 1349,
+      "Days_Cash_on_Hand": {
+        "p25": 6.4133,
+        "median": 30.2014,
+        "p75": 74.8348,
+        "mean": 60.0704,
+        "n_valid": 1319
+      },
+      "Current_Ratio": {
+        "p25": 1.3216,
+        "median": 2.4617,
+        "p75": 3.887,
+        "mean": 196.9102,
+        "n_valid": 1331
+      },
+      "Debt_Ratio": {
+        "p25": 0.2237,
+        "median": 0.4446,
+        "p75": 0.7303,
+        "mean": 0.5558,
+        "n_valid": 1333
+      },
+      "Medicare_Pct_Days": {
+        "p25": 49.2621,
+        "median": 63.1094,
+        "p75": 75.6308,
+        "mean": 60.9741,
+        "n_valid": 1344
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.0917,
+        "median": 3.2437,
+        "p75": 8.2153,
+        "mean": 7.2156,
+        "n_valid": 1171
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 109.9355,
+        "median": 142.6154,
+        "p75": 183.4057,
+        "mean": 153.9423,
+        "n_valid": 1335
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.0059,
+        "median": 48.03,
+        "p75": 54.2614,
+        "mean": 48.4906,
+        "n_valid": 1348
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3382,
+        "median": 0.8836,
+        "p75": 2.3153,
+        "mean": 2.2999,
+        "n_valid": 1263
+      },
+      "Rev_per_Discharge": {
+        "p25": 43546.0638,
+        "median": 62012.1298,
+        "p75": 94933.0884,
+        "mean": 146239.012,
+        "n_valid": 1333
+      },
+      "Cost_per_Discharge": {
+        "p25": 40759.4607,
+        "median": 57523.0857,
+        "p75": 90626.1185,
+        "mean": 134616.275,
+        "n_valid": 1347
+      },
+      "Total_Discharges": {
+        "p25": 142.0,
+        "median": 317.0,
+        "p75": 635.5,
+        "mean": 452.5212,
+        "n_valid": 1347
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.6071,
+        "n_valid": 1349
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 11130380.0,
+        "median": 19625324.0,
+        "p75": 32780365.0,
+        "mean": 26521872.6704,
+        "n_valid": 1335
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9778,
+        "n_valid": 1349
+      }
+    },
+    "2018": {
+      "n_hospitals": 1351,
+      "Days_Cash_on_Hand": {
+        "p25": 6.4982,
+        "median": 29.2947,
+        "p75": 73.3703,
+        "mean": 64.0545,
+        "n_valid": 1326
+      },
+      "Current_Ratio": {
+        "p25": 1.3232,
+        "median": 2.358,
+        "p75": 3.9633,
+        "mean": 3.4988,
+        "n_valid": 1337
+      },
+      "Debt_Ratio": {
+        "p25": 0.2264,
+        "median": 0.4361,
+        "p75": 0.7306,
+        "mean": 0.5615,
+        "n_valid": 1339
+      },
+      "Medicare_Pct_Days": {
+        "p25": 48.7961,
+        "median": 62.2717,
+        "p75": 75.1633,
+        "mean": 60.4614,
+        "n_valid": 1348
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.071,
+        "median": 3.0713,
+        "p75": 7.8044,
+        "mean": 6.9631,
+        "n_valid": 1161
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 111.475,
+        "median": 146.0728,
+        "p75": 187.1274,
+        "mean": 157.6824,
+        "n_valid": 1340
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.0536,
+        "median": 47.6669,
+        "p75": 53.9978,
+        "mean": 48.1402,
+        "n_valid": 1351
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3731,
+        "median": 0.9946,
+        "p75": 2.6219,
+        "mean": 2.6989,
+        "n_valid": 1268
+      },
+      "Rev_per_Discharge": {
+        "p25": 47449.2049,
+        "median": 68090.5457,
+        "p75": 100328.9141,
+        "mean": 142036.069,
+        "n_valid": 1339
+      },
+      "Cost_per_Discharge": {
+        "p25": 43954.6098,
+        "median": 62339.3342,
+        "p75": 96588.6957,
+        "mean": 143080.7244,
+        "n_valid": 1349
+      },
+      "Total_Discharges": {
+        "p25": 138.0,
+        "median": 301.0,
+        "p75": 607.0,
+        "mean": 435.8606,
+        "n_valid": 1349
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.9489,
+        "n_valid": 1350
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 11682895.0,
+        "median": 20186069.0,
+        "p75": 33996229.0,
+        "mean": 27700289.5511,
+        "n_valid": 1341
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9778,
+        "n_valid": 1351
+      }
+    },
+    "2019": {
+      "n_hospitals": 1353,
+      "Operating_Margin_Pct": {
+        "p25": -7.5075,
+        "median": 1.7207,
+        "p75": 10.3863,
+        "mean": 0.1143,
+        "n_valid": 576
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -0.2347,
+        "median": 5.2184,
+        "p75": 12.341,
+        "mean": 6.201,
+        "n_valid": 576
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 9.9893,
+        "median": 49.4956,
+        "p75": 133.2427,
+        "mean": 96.5804,
+        "n_valid": 1330
+      },
+      "Current_Ratio": {
+        "p25": 1.2241,
+        "median": 1.9958,
+        "p75": 3.3414,
+        "mean": 3.2034,
+        "n_valid": 1334
+      },
+      "Debt_Ratio": {
+        "p25": 0.2753,
+        "median": 0.4972,
+        "p75": 0.7575,
+        "mean": 4586.4118,
+        "n_valid": 1334
+      },
+      "Medicare_Pct_Days": {
+        "p25": 45.5788,
+        "median": 59.5369,
+        "p75": 73.5757,
+        "mean": 58.1594,
+        "n_valid": 1347
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.9308,
+        "median": 2.9412,
+        "p75": 7.6271,
+        "mean": 7.1156,
+        "n_valid": 1137
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 112.7098,
+        "median": 147.5588,
+        "p75": 191.4982,
+        "mean": 158.83,
+        "n_valid": 1342
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.384,
+        "median": 47.72,
+        "p75": 53.7988,
+        "mean": 48.0991,
+        "n_valid": 1353
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4007,
+        "median": 1.0463,
+        "p75": 2.7076,
+        "mean": 2.893,
+        "n_valid": 1273
+      },
+      "Rev_per_Discharge": {
+        "p25": 52879.3098,
+        "median": 75222.2301,
+        "p75": 113997.7625,
+        "mean": 143898.4442,
+        "n_valid": 1342
+      },
+      "Cost_per_Discharge": {
+        "p25": 49290.5899,
+        "median": 70101.6346,
+        "p75": 112775.7228,
+        "mean": 154352.5167,
+        "n_valid": 1352
+      },
+      "Total_Discharges": {
+        "p25": 127.0,
+        "median": 276.0,
+        "p75": 579.25,
+        "mean": 413.1036,
+        "n_valid": 1352
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 61.8714,
+        "n_valid": 1353
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 11961170.0,
+        "median": 20595938.0,
+        "p75": 35331388.0,
+        "mean": 28566661.4207,
+        "n_valid": 1343
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9793,
+        "n_valid": 1353
+      }
+    },
+    "2020": {
+      "n_hospitals": 1355,
+      "Operating_Margin_Pct": {
+        "p25": -9.4763,
+        "median": 2.8193,
+        "p75": 13.1248,
+        "mean": -1.0948,
+        "n_valid": 1337
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": 2.2124,
+        "median": 10.8069,
+        "p75": 20.6442,
+        "mean": 11.6088,
+        "n_valid": 1336
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 22.6342,
+        "median": 104.0578,
+        "p75": 185.14,
+        "mean": 133.6317,
+        "n_valid": 1336
+      },
+      "Current_Ratio": {
+        "p25": 1.2139,
+        "median": 1.9537,
+        "p75": 3.2322,
+        "mean": 2.9446,
+        "n_valid": 1340
+      },
+      "Debt_Ratio": {
+        "p25": 0.2985,
+        "median": 0.5014,
+        "p75": 0.7369,
+        "mean": 0.6009,
+        "n_valid": 1340
+      },
+      "Medicare_Pct_Days": {
+        "p25": 41.8715,
+        "median": 56.9888,
+        "p75": 71.3866,
+        "mean": 55.8229,
+        "n_valid": 1352
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.9532,
+        "median": 2.92,
+        "p75": 7.7409,
+        "mean": 7.3512,
+        "n_valid": 1128
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 113.6211,
+        "median": 146.9247,
+        "p75": 188.7101,
+        "mean": 157.7008,
+        "n_valid": 1346
+      },
+      "Labor_Cost_Pct": {
+        "p25": 41.7471,
+        "median": 47.6128,
+        "p75": 53.0104,
+        "mean": 47.6802,
+        "n_valid": 1359
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3531,
+        "median": 0.9453,
+        "p75": 2.5586,
+        "mean": 2.4735,
+        "n_valid": 1272
+      },
+      "Rev_per_Discharge": {
+        "p25": 57399.0165,
+        "median": 82852.5334,
+        "p75": 126452.8571,
+        "mean": 171745.5741,
+        "n_valid": 1346
+      },
+      "Cost_per_Discharge": {
+        "p25": 55027.0409,
+        "median": 78592.1379,
+        "p75": 128725.7423,
+        "mean": 183448.6359,
+        "n_valid": 1357
+      },
+      "Total_Discharges": {
+        "p25": 120.0,
+        "median": 260.0,
+        "p75": 534.0,
+        "mean": 387.804,
+        "n_valid": 1357
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.5673,
+        "n_valid": 1359
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 12483894.75,
+        "median": 21477917.5,
+        "p75": 36511002.0,
+        "mean": 29125221.7685,
+        "n_valid": 1348
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9794,
+        "n_valid": 1360
+      }
+    },
+    "2021": {
+      "n_hospitals": 1355,
+      "Operating_Margin_Pct": {
+        "p25": -6.2366,
+        "median": 4.6725,
+        "p75": 16.0371,
+        "mean": 1.8576,
+        "n_valid": 1339
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": 2.6154,
+        "median": 11.4547,
+        "p75": 20.3552,
+        "mean": 11.5374,
+        "n_valid": 1339
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 14.0481,
+        "median": 80.7886,
+        "p75": 157.9678,
+        "mean": 111.1622,
+        "n_valid": 1329
+      },
+      "Current_Ratio": {
+        "p25": 1.3559,
+        "median": 2.487,
+        "p75": 3.9867,
+        "mean": 3.4374,
+        "n_valid": 1340
+      },
+      "Debt_Ratio": {
+        "p25": 0.2172,
+        "median": 0.4052,
+        "p75": 0.6157,
+        "mean": 0.4897,
+        "n_valid": 1340
+      },
+      "Medicare_Pct_Days": {
+        "p25": 37.7567,
+        "median": 51.6387,
+        "p75": 66.1574,
+        "mean": 51.7931,
+        "n_valid": 1351
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.9867,
+        "median": 2.9148,
+        "p75": 7.8193,
+        "mean": 7.1552,
+        "n_valid": 1151
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 118.6319,
+        "median": 151.5283,
+        "p75": 188.861,
+        "mean": 160.3896,
+        "n_valid": 1348
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.9129,
+        "median": 46.3619,
+        "p75": 52.4507,
+        "mean": 46.6673,
+        "n_valid": 1358
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3248,
+        "median": 0.8185,
+        "p75": 2.1266,
+        "mean": 2.3485,
+        "n_valid": 1267
+      },
+      "Rev_per_Discharge": {
+        "p25": 60192.3343,
+        "median": 87085.2167,
+        "p75": 127850.4526,
+        "mean": 179785.7473,
+        "n_valid": 1345
+      },
+      "Cost_per_Discharge": {
+        "p25": 56600.0843,
+        "median": 81496.2197,
+        "p75": 126106.2826,
+        "mean": 184140.1019,
+        "n_valid": 1355
+      },
+      "Total_Discharges": {
+        "p25": 132.0,
+        "median": 292.0,
+        "p75": 568.0,
+        "mean": 412.0945,
+        "n_valid": 1355
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.5328,
+        "n_valid": 1357
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 14113137.0,
+        "median": 23966225.5,
+        "p75": 41893295.0,
+        "mean": 33133445.3576,
+        "n_valid": 1348
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9787,
+        "n_valid": 1360
+      }
+    },
+    "2022": {
+      "n_hospitals": 1362,
+      "Operating_Margin_Pct": {
+        "p25": -8.709,
+        "median": 3.0642,
+        "p75": 13.4728,
+        "mean": 0.3251,
+        "n_valid": 1341
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -3.1786,
+        "median": 3.4599,
+        "p75": 9.9614,
+        "mean": 2.8414,
+        "n_valid": 1341
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 9.5533,
+        "median": 50.5061,
+        "p75": 113.2717,
+        "mean": 85.4203,
+        "n_valid": 1328
+      },
+      "Current_Ratio": {
+        "p25": 1.5084,
+        "median": 2.8733,
+        "p75": 4.9371,
+        "mean": 4.3199,
+        "n_valid": 1340
+      },
+      "Debt_Ratio": {
+        "p25": 0.1746,
+        "median": 0.3515,
+        "p75": 0.594,
+        "mean": 0.4562,
+        "n_valid": 1340
+      },
+      "Medicare_Pct_Days": {
+        "p25": 36.805,
+        "median": 49.562,
+        "p75": 64.8427,
+        "mean": 50.4806,
+        "n_valid": 1353
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.8552,
+        "median": 2.8103,
+        "p75": 8.0659,
+        "mean": 7.3642,
+        "n_valid": 1127
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 122.2685,
+        "median": 155.8522,
+        "p75": 198.7041,
+        "mean": 166.778,
+        "n_valid": 1348
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.4291,
+        "median": 45.8061,
+        "p75": 51.3543,
+        "mean": 46.4487,
+        "n_valid": 1362
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3129,
+        "median": 0.807,
+        "p75": 2.1004,
+        "mean": 2.4375,
+        "n_valid": 1251
+      },
+      "Rev_per_Discharge": {
+        "p25": 68524.4322,
+        "median": 99644.3841,
+        "p75": 150000.8176,
+        "mean": 265586.2817,
+        "n_valid": 1346
+      },
+      "Cost_per_Discharge": {
+        "p25": 64565.1055,
+        "median": 93770.6024,
+        "p75": 151055.68,
+        "mean": 291246.887,
+        "n_valid": 1361
+      },
+      "Total_Discharges": {
+        "p25": 120.0,
+        "median": 261.0,
+        "p75": 542.0,
+        "mean": 391.1668,
+        "n_valid": 1361
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.4941,
+        "n_valid": 1362
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 14865931.0,
+        "median": 25166526.0,
+        "p75": 43945428.0,
+        "mean": 35314228.3714,
+        "n_valid": 1349
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9795,
+        "n_valid": 1365
+      }
+    },
+    "2023": {
+      "n_hospitals": 1368,
+      "Operating_Margin_Pct": {
+        "p25": -6.4198,
+        "median": 5.4095,
+        "p75": 16.1343,
+        "mean": 2.4871,
+        "n_valid": 1334
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -2.4751,
+        "median": 5.1561,
+        "p75": 13.0272,
+        "mean": 5.4811,
+        "n_valid": 1335
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 6.9889,
+        "median": 41.1616,
+        "p75": 103.9183,
+        "mean": 85.7913,
+        "n_valid": 1324
+      },
+      "Current_Ratio": {
+        "p25": 1.431,
+        "median": 2.8098,
+        "p75": 4.7401,
+        "mean": 3.9904,
+        "n_valid": 1347
+      },
+      "Debt_Ratio": {
+        "p25": 0.1728,
+        "median": 0.3526,
+        "p75": 0.6025,
+        "mean": 0.3525,
+        "n_valid": 1347
+      },
+      "Medicare_Pct_Days": {
+        "p25": 35.145,
+        "median": 47.619,
+        "p75": 63.2096,
+        "mean": 48.7448,
+        "n_valid": 1363
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.9185,
+        "median": 2.595,
+        "p75": 7.3123,
+        "mean": 6.8642,
+        "n_valid": 1130
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 124.1955,
+        "median": 159.6627,
+        "p75": 201.9627,
+        "mean": 170.482,
+        "n_valid": 1356
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.6377,
+        "median": 46.4119,
+        "p75": 51.5354,
+        "mean": 46.7575,
+        "n_valid": 1372
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.333,
+        "median": 0.91,
+        "p75": 2.1595,
+        "mean": 2.3711,
+        "n_valid": 1261
+      },
+      "Rev_per_Discharge": {
+        "p25": 76360.9137,
+        "median": 114528.7131,
+        "p75": 174256.4981,
+        "mean": 291442.5596,
+        "n_valid": 1352
+      },
+      "Cost_per_Discharge": {
+        "p25": 70653.7771,
+        "median": 106439.2883,
+        "p75": 170371.2943,
+        "mean": 318786.0698,
+        "n_valid": 1370
+      },
+      "Total_Discharges": {
+        "p25": 109.0,
+        "median": 243.5,
+        "p75": 509.0,
+        "mean": 379.7664,
+        "n_valid": 1370
+      },
+      "Num_Beds": {
+        "p25": 18.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 21.3795,
+        "n_valid": 1373
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 15701841.5,
+        "median": 27241213.5,
+        "p75": 48906570.75,
+        "mean": 37526180.413,
+        "n_valid": 1356
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.9789,
+        "n_valid": 1375
+      }
+    },
+    "2024": {
+      "n_hospitals": 807,
+      "Operating_Margin_Pct": {
+        "p25": -6.3639,
+        "median": 5.1944,
+        "p75": 16.2747,
+        "mean": 1.548,
+        "n_valid": 793
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -2.1587,
+        "median": 5.089,
+        "p75": 12.0201,
+        "mean": 4.5681,
+        "n_valid": 793
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 0.3847,
+        "median": 36.9243,
+        "p75": 61.0571,
+        "mean": 47.2109,
+        "n_valid": 21
+      },
+      "Current_Ratio": {
+        "p25": 0.6304,
+        "median": 2.1021,
+        "p75": 4.1545,
+        "mean": -294.8506,
+        "n_valid": 21
+      },
+      "Debt_Ratio": {
+        "p25": 0.1044,
+        "median": 0.3353,
+        "p75": 0.6231,
+        "mean": 0.4161,
+        "n_valid": 21
+      },
+      "Medicare_Pct_Days": {
+        "p25": 40.0912,
+        "median": 54.0734,
+        "p75": 61.687,
+        "mean": 54.5766,
+        "n_valid": 20
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.9652,
+        "median": 3.8882,
+        "p75": 5.9247,
+        "mean": 4.5837,
+        "n_valid": 15
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 149.2727,
+        "median": 183.5444,
+        "p75": 234.1369,
+        "mean": 205.8106,
+        "n_valid": 21
+      },
+      "Labor_Cost_Pct": {
+        "p25": 35.9136,
+        "median": 41.6992,
+        "p75": 48.5082,
+        "mean": 42.6732,
+        "n_valid": 21
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.3604,
+        "median": 1.0284,
+        "p75": 3.3609,
+        "mean": 2.8852,
+        "n_valid": 20
+      },
+      "Rev_per_Discharge": {
+        "p25": 60321.972,
+        "median": 85123.6259,
+        "p75": 129441.4462,
+        "mean": 202347.8555,
+        "n_valid": 21
+      },
+      "Cost_per_Discharge": {
+        "p25": 60429.3715,
+        "median": 80285.1458,
+        "p75": 97566.172,
+        "mean": 319467.4475,
+        "n_valid": 21
+      },
+      "Total_Discharges": {
+        "p25": 186.0,
+        "median": 409.0,
+        "p75": 561.0,
+        "mean": 417.6667,
+        "n_valid": 21
+      },
+      "Num_Beds": {
+        "p25": 21.0,
+        "median": 25.0,
+        "p75": 25.0,
+        "mean": 22.6667,
+        "n_valid": 21
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 15080493.0,
+        "median": 24076109.0,
+        "p75": 48925655.0,
+        "mean": 31201193.2857,
+        "n_valid": 21
+      },
+      "Is_340B_Enrolled": {
+        "p25": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.6803,
+        "n_valid": 807
+      }
+    }
+  },
+  "REH": {
+    "2011": {
+      "n_hospitals": 23,
+      "Days_Cash_on_Hand": {
+        "p25": 2.1387,
+        "median": 51.8004,
+        "p75": 82.0987,
+        "mean": 40.7808,
+        "n_valid": 23
+      },
+      "Current_Ratio": {
+        "p25": 1.5002,
+        "median": 2.7572,
+        "p75": 5.201,
+        "mean": 5.1766,
+        "n_valid": 23
+      },
+      "Debt_Ratio": {
+        "p25": 0.2109,
+        "median": 0.4003,
+        "p75": 0.5569,
+        "mean": 0.631,
+        "n_valid": 23
+      },
+      "Medicare_Pct_Days": {
+        "p25": 52.1137,
+        "median": 65.7493,
+        "p75": 73.9239,
+        "mean": 60.398,
+        "n_valid": 22
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 2.967,
+        "median": 6.6268,
+        "p75": 15.8883,
+        "mean": 13.1537,
+        "n_valid": 21
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 90.2869,
+        "median": 102.2308,
+        "p75": 152.1142,
+        "mean": 123.9755,
+        "n_valid": 23
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.3555,
+        "median": 49.471,
+        "p75": 57.2087,
+        "mean": 49.0419,
+        "n_valid": 23
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4575,
+        "median": 1.2468,
+        "p75": 1.931,
+        "mean": 1.4597,
+        "n_valid": 21
+      },
+      "Rev_per_Discharge": {
+        "p25": 16711.6195,
+        "median": 20181.8585,
+        "p75": 38487.3985,
+        "mean": 31110.5925,
+        "n_valid": 22
+      },
+      "Cost_per_Discharge": {
+        "p25": 16148.5514,
+        "median": 18243.0993,
+        "p75": 39454.5539,
+        "mean": 29755.7725,
+        "n_valid": 22
+      },
+      "Total_Discharges": {
+        "p25": 169.5,
+        "median": 392.5,
+        "p75": 884.75,
+        "mean": 650.5909,
+        "n_valid": 22
+      },
+      "Num_Beds": {
+        "p25": 15.25,
+        "median": 25.0,
+        "p75": 33.5,
+        "mean": 29.4545,
+        "n_valid": 22
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 6822872.0,
+        "median": 9665397.0,
+        "p75": 16506946.0,
+        "mean": 15652428.9565,
+        "n_valid": 23
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 23
+      }
+    },
+    "2012": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 0.3407,
+        "median": 16.523,
+        "p75": 64.7303,
+        "mean": 39.7451,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.3342,
+        "median": 3.0114,
+        "p75": 3.9539,
+        "mean": 3.8892,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2254,
+        "median": 0.435,
+        "p75": 0.6421,
+        "mean": 0.6803,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 49.6746,
+        "median": 63.9885,
+        "p75": 77.1418,
+        "mean": 60.5048,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.8053,
+        "median": 5.291,
+        "p75": 16.3092,
+        "mean": 12.2755,
+        "n_valid": 22
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 86.1839,
+        "median": 135.7518,
+        "p75": 195.9973,
+        "mean": 155.4872,
+        "n_valid": 23
+      },
+      "Labor_Cost_Pct": {
+        "p25": 41.8962,
+        "median": 48.8831,
+        "p75": 54.1626,
+        "mean": 49.2685,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.5476,
+        "median": 0.9795,
+        "p75": 1.5698,
+        "mean": 1.9349,
+        "n_valid": 22
+      },
+      "Rev_per_Discharge": {
+        "p25": 18525.8364,
+        "median": 21739.7647,
+        "p75": 48071.1121,
+        "mean": 709433.369,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 17986.6005,
+        "median": 22027.4626,
+        "p75": 47924.4218,
+        "mean": 188879.8431,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 117.75,
+        "median": 325.5,
+        "p75": 708.25,
+        "mean": 573.5417,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 15.0,
+        "median": 25.0,
+        "p75": 34.0,
+        "mean": 28.9583,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 6529719.0,
+        "median": 10433305.0,
+        "p75": 15423790.25,
+        "mean": 15367351.375,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2013": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 0.1521,
+        "median": 16.864,
+        "p75": 55.9505,
+        "mean": 41.372,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.5513,
+        "median": 2.726,
+        "p75": 3.192,
+        "mean": 3.9004,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.3012,
+        "median": 0.4399,
+        "p75": 0.7363,
+        "mean": 0.7258,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 45.4239,
+        "median": 58.2969,
+        "p75": 76.4339,
+        "mean": 57.1182,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.9555,
+        "median": 7.0974,
+        "p75": 16.0116,
+        "mean": 13.205,
+        "n_valid": 22
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 98.6839,
+        "median": 148.9408,
+        "p75": 205.9439,
+        "mean": 168.6126,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.1302,
+        "median": 50.3654,
+        "p75": 56.6142,
+        "mean": 50.0017,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.6147,
+        "median": 1.333,
+        "p75": 2.0407,
+        "mean": 1.708,
+        "n_valid": 22
+      },
+      "Rev_per_Discharge": {
+        "p25": 20044.9084,
+        "median": 25208.1579,
+        "p75": 57955.256,
+        "mean": 125567.0261,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 19428.0404,
+        "median": 27987.7993,
+        "p75": 51737.9258,
+        "mean": 57429.348,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 103.5,
+        "median": 310.5,
+        "p75": 734.0,
+        "mean": 546.6667,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 15.0,
+        "median": 25.0,
+        "p75": 34.0,
+        "mean": 28.9583,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 5935110.5,
+        "median": 9909982.0,
+        "p75": 14920946.25,
+        "mean": 15051160.9167,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2014": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 0.9049,
+        "median": 14.7913,
+        "p75": 48.0349,
+        "mean": 33.7242,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.5495,
+        "median": 2.2781,
+        "p75": 3.4872,
+        "mean": 2.5865,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2761,
+        "median": 0.4435,
+        "p75": 0.7869,
+        "mean": 0.7208,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 46.8121,
+        "median": 65.1262,
+        "p75": 76.6675,
+        "mean": 59.8275,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 2.9071,
+        "median": 7.4532,
+        "p75": 18.4342,
+        "mean": 12.8237,
+        "n_valid": 22
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 109.3897,
+        "median": 162.6934,
+        "p75": 224.1912,
+        "mean": 175.2994,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 44.1209,
+        "median": 52.3525,
+        "p75": 58.5726,
+        "mean": 50.7684,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.451,
+        "median": 1.0485,
+        "p75": 1.8733,
+        "mean": 1.4857,
+        "n_valid": 21
+      },
+      "Rev_per_Discharge": {
+        "p25": 23109.9513,
+        "median": 26808.9914,
+        "p75": 64934.3221,
+        "mean": 300826.6848,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 20773.8114,
+        "median": 25565.4535,
+        "p75": 52865.8895,
+        "mean": 117208.2956,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 121.25,
+        "median": 320.0,
+        "p75": 520.0,
+        "mean": 504.2917,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 15.0,
+        "median": 25.0,
+        "p75": 34.0,
+        "mean": 28.9583,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 6680445.5,
+        "median": 10925582.0,
+        "p75": 15686650.75,
+        "mean": 15569220.9167,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2015": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 6.4544,
+        "median": 14.585,
+        "p75": 41.7794,
+        "mean": 44.7009,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.2418,
+        "median": 1.8535,
+        "p75": 3.6479,
+        "mean": 3.1232,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2465,
+        "median": 0.4667,
+        "p75": 0.9433,
+        "mean": 0.7625,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 49.3471,
+        "median": 63.439,
+        "p75": 84.8342,
+        "mean": 63.9157,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.9313,
+        "median": 5.2408,
+        "p75": 15.8982,
+        "mean": 13.0829,
+        "n_valid": 17
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 125.4962,
+        "median": 163.5638,
+        "p75": 248.0039,
+        "mean": 199.9132,
+        "n_valid": 23
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.8405,
+        "median": 51.5833,
+        "p75": 57.6164,
+        "mean": 50.0637,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4459,
+        "median": 1.0146,
+        "p75": 1.7241,
+        "mean": 2.1885,
+        "n_valid": 21
+      },
+      "Rev_per_Discharge": {
+        "p25": 19284.3258,
+        "median": 30525.4597,
+        "p75": 58280.1461,
+        "mean": 1111767.9581,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 20448.3704,
+        "median": 28471.4694,
+        "p75": 58484.703,
+        "mean": 533188.6618,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 108.5,
+        "median": 322.0,
+        "p75": 548.0,
+        "mean": 478.5,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 14.75,
+        "median": 25.0,
+        "p75": 34.0,
+        "mean": 28.75,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 6965764.5,
+        "median": 10578714.5,
+        "p75": 15242934.25,
+        "mean": 15808512.5,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2016": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 4.5596,
+        "median": 12.9168,
+        "p75": 41.5013,
+        "mean": 33.3568,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.0459,
+        "median": 1.8248,
+        "p75": 3.246,
+        "mean": 1.0312,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2382,
+        "median": 0.3919,
+        "p75": 0.7338,
+        "mean": 0.8824,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 40.0161,
+        "median": 63.4343,
+        "p75": 79.2615,
+        "mean": 58.7296,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 3.1082,
+        "median": 4.1033,
+        "p75": 15.3892,
+        "mean": 13.039,
+        "n_valid": 17
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 114.5332,
+        "median": 159.5641,
+        "p75": 256.679,
+        "mean": 207.3804,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 43.7989,
+        "median": 53.3996,
+        "p75": 58.4644,
+        "mean": 51.3008,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4541,
+        "median": 0.897,
+        "p75": 1.6108,
+        "mean": 1.7995,
+        "n_valid": 22
+      },
+      "Rev_per_Discharge": {
+        "p25": 25629.4244,
+        "median": 34015.4341,
+        "p75": 74271.5555,
+        "mean": 258481.985,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 19569.0797,
+        "median": 34485.0103,
+        "p75": 73383.1716,
+        "mean": 104897.5998,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 82.0,
+        "median": 294.5,
+        "p75": 464.25,
+        "mean": 433.875,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 15.0,
+        "median": 25.0,
+        "p75": 32.5,
+        "mean": 28.1667,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 7210842.75,
+        "median": 10401327.0,
+        "p75": 16476706.5,
+        "mean": 16892672.125,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2017": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 4.9401,
+        "median": 12.1123,
+        "p75": 49.7648,
+        "mean": 40.014,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.0351,
+        "median": 1.592,
+        "p75": 2.4953,
+        "mean": 1.4735,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2316,
+        "median": 0.4725,
+        "p75": 0.8787,
+        "mean": 0.6913,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 42.7189,
+        "median": 63.0435,
+        "p75": 73.5585,
+        "mean": 57.7454,
+        "n_valid": 23
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 2.5821,
+        "median": 9.2204,
+        "p75": 16.4235,
+        "mean": 15.8507,
+        "n_valid": 19
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 127.3532,
+        "median": 184.3287,
+        "p75": 277.2821,
+        "mean": 196.6282,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 48.0635,
+        "median": 52.8022,
+        "p75": 60.9814,
+        "mean": 51.8807,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.199,
+        "median": 0.7114,
+        "p75": 1.239,
+        "mean": 0.6508,
+        "n_valid": 23
+      },
+      "Rev_per_Discharge": {
+        "p25": 21203.0774,
+        "median": 29454.1025,
+        "p75": 66720.4284,
+        "mean": 1048501.6636,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 22121.377,
+        "median": 32110.9763,
+        "p75": 50665.4884,
+        "mean": 249026.868,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 140.25,
+        "median": 284.5,
+        "p75": 556.25,
+        "mean": 435.5833,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 14.25,
+        "median": 25.0,
+        "p75": 32.5,
+        "mean": 27.9167,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 5540167.0,
+        "median": 10025979.5,
+        "p75": 17224466.0,
+        "mean": 15715903.5,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2018": {
+      "n_hospitals": 24,
+      "Days_Cash_on_Hand": {
+        "p25": 5.5591,
+        "median": 28.8368,
+        "p75": 52.5146,
+        "mean": 47.9976,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 1.1222,
+        "median": 2.0747,
+        "p75": 3.049,
+        "mean": 3.601,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2595,
+        "median": 0.491,
+        "p75": 0.9232,
+        "mean": 0.747,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 41.921,
+        "median": 59.692,
+        "p75": 75.2663,
+        "mean": 54.807,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 4.056,
+        "median": 6.8657,
+        "p75": 15.5205,
+        "mean": 12.963,
+        "n_valid": 20
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 135.5823,
+        "median": 194.4658,
+        "p75": 302.1671,
+        "mean": 233.9227,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 47.0512,
+        "median": 49.2783,
+        "p75": 58.2001,
+        "mean": 50.6328,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.1608,
+        "median": 0.6827,
+        "p75": 1.9163,
+        "mean": 2.3145,
+        "n_valid": 22
+      },
+      "Rev_per_Discharge": {
+        "p25": 22401.7266,
+        "median": 30456.3474,
+        "p75": 50174.9692,
+        "mean": 317919.0785,
+        "n_valid": 24
+      },
+      "Cost_per_Discharge": {
+        "p25": 20357.2911,
+        "median": 31988.1122,
+        "p75": 60957.2073,
+        "mean": 123389.3542,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 116.0,
+        "median": 268.5,
+        "p75": 504.0,
+        "mean": 446.7917,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 14.25,
+        "median": 25.0,
+        "p75": 32.5,
+        "mean": 27.8333,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 5560024.5,
+        "median": 9323427.5,
+        "p75": 16625864.75,
+        "mean": 15473121.1667,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2019": {
+      "n_hospitals": 24,
+      "Operating_Margin_Pct": {
+        "p25": -14.3478,
+        "median": -2.9039,
+        "p75": 13.3917,
+        "mean": -3.1689,
+        "n_valid": 7
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -2.2604,
+        "median": 5.8141,
+        "p75": 13.6181,
+        "mean": 5.0846,
+        "n_valid": 7
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 11.2114,
+        "median": 24.9321,
+        "p75": 51.454,
+        "mean": 68.49,
+        "n_valid": 23
+      },
+      "Current_Ratio": {
+        "p25": 0.907,
+        "median": 1.4105,
+        "p75": 2.009,
+        "mean": -0.7661,
+        "n_valid": 23
+      },
+      "Debt_Ratio": {
+        "p25": 0.3391,
+        "median": 0.6004,
+        "p75": 0.9797,
+        "mean": 0.8734,
+        "n_valid": 23
+      },
+      "Medicare_Pct_Days": {
+        "p25": 32.6431,
+        "median": 56.2397,
+        "p75": 68.8973,
+        "mean": 51.9242,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 2.2815,
+        "median": 4.8231,
+        "p75": 13.278,
+        "mean": 10.1081,
+        "n_valid": 20
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 124.7173,
+        "median": 180.9538,
+        "p75": 330.3431,
+        "mean": 235.5612,
+        "n_valid": 23
+      },
+      "Labor_Cost_Pct": {
+        "p25": 43.3699,
+        "median": 49.4294,
+        "p75": 56.0882,
+        "mean": 50.0744,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.1875,
+        "median": 1.201,
+        "p75": 2.8138,
+        "mean": 2.806,
+        "n_valid": 21
+      },
+      "Rev_per_Discharge": {
+        "p25": 23354.1207,
+        "median": 41579.8939,
+        "p75": 64967.9504,
+        "mean": 160453.3412,
+        "n_valid": 23
+      },
+      "Cost_per_Discharge": {
+        "p25": 24056.9869,
+        "median": 36959.3423,
+        "p75": 69958.1061,
+        "mean": 67222.7698,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 127.5,
+        "median": 223.5,
+        "p75": 476.5,
+        "mean": 338.9167,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 14.25,
+        "median": 25.0,
+        "p75": 32.5,
+        "mean": 27.4167,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 6512342.5,
+        "median": 8049748.0,
+        "p75": 18043920.0,
+        "mean": 15426657.7391,
+        "n_valid": 23
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2020": {
+      "n_hospitals": 24,
+      "Operating_Margin_Pct": {
+        "p25": -31.4082,
+        "median": -14.5445,
+        "p75": 4.2566,
+        "mean": -16.7863,
+        "n_valid": 24
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -10.3321,
+        "median": 2.2399,
+        "p75": 31.1001,
+        "mean": 5.0259,
+        "n_valid": 24
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 41.9246,
+        "median": 75.5943,
+        "p75": 161.5164,
+        "mean": 129.1658,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 0.8154,
+        "median": 2.2818,
+        "p75": 3.7683,
+        "mean": 9.8174,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.323,
+        "median": 0.5453,
+        "p75": 0.9243,
+        "mean": -0.293,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 35.1249,
+        "median": 47.8261,
+        "p75": 64.9679,
+        "mean": 47.7519,
+        "n_valid": 23
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.9171,
+        "median": 3.6873,
+        "p75": 17.2947,
+        "mean": 11.7896,
+        "n_valid": 20
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 148.1988,
+        "median": 182.8099,
+        "p75": 306.9326,
+        "mean": 243.0491,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 39.8283,
+        "median": 47.0265,
+        "p75": 51.659,
+        "mean": 47.6284,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.1694,
+        "median": 1.3766,
+        "p75": 3.0453,
+        "mean": 2.5326,
+        "n_valid": 23
+      },
+      "Rev_per_Discharge": {
+        "p25": 25218.2551,
+        "median": 39667.8023,
+        "p75": 77407.9518,
+        "mean": 260767.9803,
+        "n_valid": 23
+      },
+      "Cost_per_Discharge": {
+        "p25": 28385.9116,
+        "median": 49716.9479,
+        "p75": 94002.4796,
+        "mean": 149016.1603,
+        "n_valid": 23
+      },
+      "Total_Discharges": {
+        "p25": 86.5,
+        "median": 178.0,
+        "p75": 432.0,
+        "mean": 308.3478,
+        "n_valid": 23
+      },
+      "Num_Beds": {
+        "p25": 15.0,
+        "median": 25.0,
+        "p75": 33.0,
+        "mean": 24.6522,
+        "n_valid": 23
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 6000998.0,
+        "median": 7985039.5,
+        "p75": 16316299.0,
+        "mean": 14005866.875,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2021": {
+      "n_hospitals": 25,
+      "Operating_Margin_Pct": {
+        "p25": -32.5594,
+        "median": -9.5902,
+        "p75": 12.6261,
+        "mean": -10.8787,
+        "n_valid": 24
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -18.4738,
+        "median": -4.0858,
+        "p75": 22.3145,
+        "mean": -2.1722,
+        "n_valid": 24
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 11.2507,
+        "median": 56.4328,
+        "p75": 83.7632,
+        "mean": 70.7098,
+        "n_valid": 24
+      },
+      "Current_Ratio": {
+        "p25": 0.6235,
+        "median": 1.189,
+        "p75": 2.5419,
+        "mean": -14.566,
+        "n_valid": 24
+      },
+      "Debt_Ratio": {
+        "p25": 0.2755,
+        "median": 0.5056,
+        "p75": 0.8232,
+        "mean": 0.6053,
+        "n_valid": 24
+      },
+      "Medicare_Pct_Days": {
+        "p25": 30.0542,
+        "median": 41.1357,
+        "p75": 55.7907,
+        "mean": 41.8511,
+        "n_valid": 24
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 2.0501,
+        "median": 7.4519,
+        "p75": 14.2142,
+        "mean": 11.538,
+        "n_valid": 21
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 143.5406,
+        "median": 213.7615,
+        "p75": 317.169,
+        "mean": 250.5879,
+        "n_valid": 24
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.2432,
+        "median": 44.9969,
+        "p75": 52.0057,
+        "mean": 46.2001,
+        "n_valid": 25
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.8185,
+        "median": 1.8687,
+        "p75": 3.1841,
+        "mean": 2.8571,
+        "n_valid": 21
+      },
+      "Rev_per_Discharge": {
+        "p25": 33009.487,
+        "median": 51871.774,
+        "p75": 89993.4299,
+        "mean": 296206.7006,
+        "n_valid": 23
+      },
+      "Cost_per_Discharge": {
+        "p25": 43756.6623,
+        "median": 58841.6066,
+        "p75": 99930.4447,
+        "mean": 105754.991,
+        "n_valid": 24
+      },
+      "Total_Discharges": {
+        "p25": 89.5,
+        "median": 191.5,
+        "p75": 419.75,
+        "mean": 262.9583,
+        "n_valid": 24
+      },
+      "Num_Beds": {
+        "p25": 14.75,
+        "median": 25.0,
+        "p75": 34.0,
+        "mean": 24.1667,
+        "n_valid": 24
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 7457031.0,
+        "median": 9526888.5,
+        "p75": 15917783.25,
+        "mean": 16445724.25,
+        "n_valid": 24
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 25
+      }
+    },
+    "2022": {
+      "n_hospitals": 24,
+      "Operating_Margin_Pct": {
+        "p25": -38.2923,
+        "median": -14.4393,
+        "p75": 6.1661,
+        "mean": -12.858,
+        "n_valid": 23
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -22.613,
+        "median": -12.9986,
+        "p75": 1.4715,
+        "mean": -12.357,
+        "n_valid": 23
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 0.7749,
+        "median": 26.7249,
+        "p75": 46.3903,
+        "mean": 35.537,
+        "n_valid": 23
+      },
+      "Current_Ratio": {
+        "p25": 0.7126,
+        "median": 2.2189,
+        "p75": 2.9634,
+        "mean": -16.7331,
+        "n_valid": 23
+      },
+      "Debt_Ratio": {
+        "p25": 0.1461,
+        "median": 0.3603,
+        "p75": 0.8085,
+        "mean": 0.7357,
+        "n_valid": 23
+      },
+      "Medicare_Pct_Days": {
+        "p25": 29.1202,
+        "median": 42.4725,
+        "p75": 54.272,
+        "mean": 43.3184,
+        "n_valid": 22
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 0.9904,
+        "median": 8.8256,
+        "p75": 12.4104,
+        "mean": 10.5988,
+        "n_valid": 18
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 135.3261,
+        "median": 217.3957,
+        "p75": 366.9175,
+        "mean": 272.8259,
+        "n_valid": 23
+      },
+      "Labor_Cost_Pct": {
+        "p25": 39.6075,
+        "median": 46.6836,
+        "p75": 51.9938,
+        "mean": 46.3258,
+        "n_valid": 24
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.4181,
+        "median": 1.1973,
+        "p75": 2.9297,
+        "mean": 2.85,
+        "n_valid": 20
+      },
+      "Rev_per_Discharge": {
+        "p25": 39228.9607,
+        "median": 52605.6914,
+        "p75": 146914.206,
+        "mean": 815569.7943,
+        "n_valid": 22
+      },
+      "Cost_per_Discharge": {
+        "p25": 49026.9848,
+        "median": 77918.726,
+        "p75": 129900.4963,
+        "mean": 491376.7216,
+        "n_valid": 23
+      },
+      "Total_Discharges": {
+        "p25": 84.5,
+        "median": 146.0,
+        "p75": 363.5,
+        "mean": 236.0435,
+        "n_valid": 23
+      },
+      "Num_Beds": {
+        "p25": 15.0,
+        "median": 25.0,
+        "p75": 33.0,
+        "mean": 24.6522,
+        "n_valid": 23
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 7885178.5,
+        "median": 9369064.0,
+        "p75": 15234569.5,
+        "mean": 17068615.7391,
+        "n_valid": 23
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 24
+      }
+    },
+    "2023": {
+      "n_hospitals": 29,
+      "Operating_Margin_Pct": {
+        "p25": -37.6565,
+        "median": -16.6081,
+        "p75": 9.8007,
+        "mean": -13.6555,
+        "n_valid": 22
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -21.4478,
+        "median": -11.7027,
+        "p75": 12.9926,
+        "mean": -6.9672,
+        "n_valid": 22
+      },
+      "Days_Cash_on_Hand": {
+        "p25": -4.2439,
+        "median": 14.8051,
+        "p75": 25.74,
+        "mean": 136.6807,
+        "n_valid": 27
+      },
+      "Current_Ratio": {
+        "p25": 0.6661,
+        "median": 1.2146,
+        "p75": 3.1648,
+        "mean": -15.4688,
+        "n_valid": 27
+      },
+      "Debt_Ratio": {
+        "p25": 0.0778,
+        "median": 0.3625,
+        "p75": 0.7088,
+        "mean": 1.6576,
+        "n_valid": 27
+      },
+      "Medicare_Pct_Days": {
+        "p25": 32.1562,
+        "median": 43.1246,
+        "p75": 61.8678,
+        "mean": 43.9326,
+        "n_valid": 18
+      },
+      "Medicaid_Pct_Days": {
+        "p25": 1.1184,
+        "median": 2.9465,
+        "p75": 8.6667,
+        "mean": 6.2392,
+        "n_valid": 14
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 144.3594,
+        "median": 255.5907,
+        "p75": 444.9772,
+        "mean": 321.8413,
+        "n_valid": 27
+      },
+      "Labor_Cost_Pct": {
+        "p25": 40.0574,
+        "median": 44.4726,
+        "p75": 50.7734,
+        "mean": 46.3764,
+        "n_valid": 29
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 0.6612,
+        "median": 2.1014,
+        "p75": 4.2073,
+        "mean": 3.2213,
+        "n_valid": 22
+      },
+      "Rev_per_Discharge": {
+        "p25": 45184.8322,
+        "median": 59519.1807,
+        "p75": 133865.1667,
+        "mean": 152388.0793,
+        "n_valid": 17
+      },
+      "Cost_per_Discharge": {
+        "p25": 53108.6298,
+        "median": 62044.0367,
+        "p75": 139262.7713,
+        "mean": 145267.6382,
+        "n_valid": 18
+      },
+      "Total_Discharges": {
+        "p25": 61.25,
+        "median": 123.5,
+        "p75": 236.25,
+        "mean": 171.8889,
+        "n_valid": 18
+      },
+      "Num_Beds": {
+        "p25": 13.5,
+        "median": 25.0,
+        "p75": 30.0,
+        "mean": 27.2105,
+        "n_valid": 19
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 4654521.0,
+        "median": 7795403.0,
+        "p75": 12238570.5,
+        "mean": 9779339.037,
+        "n_valid": 27
+      },
+      "Is_340B_Enrolled": {
+        "p25": 1.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 1.0,
+        "n_valid": 29
+      }
+    },
+    "2024": {
+      "n_hospitals": 21,
+      "Operating_Margin_Pct": {
+        "p25": -63.1043,
+        "median": -29.9172,
+        "p75": 12.7048,
+        "mean": -34.986,
+        "n_valid": 18
+      },
+      "Net_Profit_Margin_Pct": {
+        "p25": -28.4289,
+        "median": -4.7691,
+        "p75": 5.7877,
+        "mean": -7.4496,
+        "n_valid": 18
+      },
+      "Days_Cash_on_Hand": {
+        "p25": 22.4308,
+        "median": 27.6552,
+        "p75": 138.6154,
+        "mean": 133.3911,
+        "n_valid": 4
+      },
+      "Current_Ratio": {
+        "p25": 1.9403,
+        "median": 2.6851,
+        "p75": 11.391,
+        "mean": 10.6462,
+        "n_valid": 4
+      },
+      "Debt_Ratio": {
+        "p25": 0.1598,
+        "median": 0.2058,
+        "p75": 0.3205,
+        "mean": 0.2745,
+        "n_valid": 4
+      },
+      "Outpatient_Rev_Pct": {
+        "p25": 176.9735,
+        "median": 249.2001,
+        "p75": 402.9163,
+        "mean": 330.6897,
+        "n_valid": 4
+      },
+      "Labor_Cost_Pct": {
+        "p25": 42.2905,
+        "median": 50.7887,
+        "p75": 60.9405,
+        "mean": 52.4422,
+        "n_valid": 4
+      },
+      "Charity_Care_Pct_Revenue": {
+        "p25": 3.944,
+        "median": 4.0201,
+        "p75": 4.0962,
+        "mean": 4.0201,
+        "n_valid": 2
+      },
+      "CMS_Net_Patient_Revenue": {
+        "p25": 4930081.75,
+        "median": 7756639.5,
+        "p75": 10494685.5,
+        "mean": 7668127.75,
+        "n_valid": 4
+      },
+      "Is_340B_Enrolled": {
+        "p25": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "mean": 0.6667,
+        "n_valid": 21
+      }
+    }
+  }
+}
