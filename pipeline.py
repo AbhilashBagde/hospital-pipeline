@@ -139,8 +139,10 @@ def run_downloads(years: list[int] | None = None) -> dict:
 
 def run_build_dataset(file_paths: dict) -> Path:
     """
-    Run the build_dataset logic, pointing it at the freshly downloaded files.
-    Paths are passed via environment variables so they survive importlib.reload().
+    Run build_dataset.py as a subprocess with file paths passed via BD_* env vars.
+    Using subprocess (same pattern as run_build_baselines) avoids all import/reload
+    timing issues: the child process starts with a clean slate and reads env vars
+    before any module-level code touches the filesystem.
     """
     logger.info("=" * 60)
     logger.info("STEP 4: Building Final_Hospital_Dataset.csv")
@@ -148,15 +150,21 @@ def run_build_dataset(file_paths: dict) -> Path:
 
     import json
 
-    # build_dataset.py reads BD_* env vars at module load time, which is the
-    # only mechanism that survives importlib.reload() (direct attribute patches
-    # are wiped when the module re-executes).
-    os.environ["BD_CMS_FILES"]   = json.dumps({yr: str(p) for yr, p in file_paths["cms"].items()})
-    os.environ["BD_NASHP_FILE"]  = str(file_paths["path_nashp"])
-    os.environ["BD_REH_FILE"]    = str(_find_reh_file())
-    os.environ["BD_OUTPUT_FILE"] = str(FINAL_DATASET_PATH)
+    env = os.environ.copy()
+    env["BD_CMS_FILES"]   = json.dumps({yr: str(p) for yr, p in file_paths["cms"].items()})
+    env["BD_NASHP_FILE"]  = str(file_paths["path_nashp"])
+    env["BD_REH_FILE"]    = str(_find_reh_file())
+    env["BD_OUTPUT_FILE"] = str(FINAL_DATASET_PATH)
 
-    _exec_build_dataset()
+    result = subprocess.run(
+        [sys.executable, str(BASE_DIR / "build_dataset.py")],
+        env=env,
+        cwd=str(BASE_DIR),
+        capture_output=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("build_dataset.py failed — see output above for details")
+
     logger.info(f"  Final_Hospital_Dataset.csv → {FINAL_DATASET_PATH}")
     return FINAL_DATASET_PATH
 
@@ -174,24 +182,6 @@ def _find_reh_file() -> Path:
         "This file must be committed manually to data/manual/REH_Info_Cleaned.csv\n"
         "It tracks hospitals that converted from CAH to REH status."
     )
-
-
-def _exec_build_dataset():
-    """Execute build_dataset.py with overridden file paths from BD_* env vars."""
-    import importlib
-    import sys
-
-    try:
-        if "build_dataset" in sys.modules:
-            # Already imported in a previous call — reload to re-execute with new env vars
-            import build_dataset as bd
-            importlib.reload(bd)
-        else:
-            # First import: module body executes immediately, picking up BD_* env vars
-            import build_dataset  # noqa: F401
-    finally:
-        for var in ("BD_CMS_FILES", "BD_NASHP_FILE", "BD_REH_FILE", "BD_OUTPUT_FILE"):
-            os.environ.pop(var, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
