@@ -228,60 +228,38 @@ jobs:
           git push || echo "Push skipped (branch protection or nothing to push)."
 
       # ── 10b. Push SST_v4.csv to capstone_project_1 ───────────────────────────
+      # SST_v4.csv is ~73 MB — too large for the GitHub Contents API (base64
+      # payload exceeds OS ARG_MAX and the API's own size limit). Use a direct
+      # git clone → copy → commit → push instead.
       - name: Push SST_v4.csv to capstone_project_1
         if: success() && hashFiles('data/output/SST_v4.csv') != ''
         env:
           CAPSTONE_TOKEN: ${{ secrets.CAPSTONE_REPO_TOKEN }}
         run: |
-          DEST_REPO="AbhilashBagde/capstone_project_1"
           FILE_PATH="data/output/SST_v4.csv"
-          DEST_PATH="SST_v4.csv"
-
           if [ ! -f "$FILE_PATH" ]; then
             echo "SST_v4.csv not found — skipping"
             exit 0
           fi
 
-          CONTENT=$(base64 -w 0 "$FILE_PATH")
-          SHA=$(curl -s \
-            -H "Authorization: Bearer $CAPSTONE_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$DEST_REPO/contents/$DEST_PATH" \
-            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || echo "")
-
+          DEST_REPO="AbhilashBagde/capstone_project_1"
           TODAY=$(date +%Y-%m-%d)
-          if [ -n "$SHA" ]; then
-            PAYLOAD=$(python3 -c "
-          import json, sys
-          print(json.dumps({
-            'message': 'chore: update SST_v4.csv from pipeline run $TODAY [skip ci]',
-            'content': sys.argv[1],
-            'sha':     sys.argv[2],
-          }))" "$CONTENT" "$SHA")
-          else
-            PAYLOAD=$(python3 -c "
-          import json, sys
-          print(json.dumps({
-            'message': 'chore: add SST_v4.csv from pipeline run $TODAY [skip ci]',
-            'content': sys.argv[1],
-          }))" "$CONTENT")
-          fi
 
-          HTTP_STATUS=$(curl -s -o /tmp/push_sst4.json -w "%{http_code}" \
-            -X PUT \
-            -H "Authorization: Bearer $CAPSTONE_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/$DEST_REPO/contents/$DEST_PATH" \
-            -d "$PAYLOAD")
+          git clone --depth=1 \
+            "https://x-access-token:${CAPSTONE_TOKEN}@github.com/${DEST_REPO}.git" \
+            /tmp/capstone_clone
 
-          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "201" ]; then
-            echo "✓ SST_v4.csv pushed to $DEST_REPO (HTTP $HTTP_STATUS)"
-          else
-            echo "::error::Push failed (HTTP $HTTP_STATUS)"
-            cat /tmp/push_sst4.json
-            exit 1
-          fi
+          cp "$FILE_PATH" /tmp/capstone_clone/SST_v4.csv
+
+          cd /tmp/capstone_clone
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add SST_v4.csv
+          git diff --staged --quiet && echo "SST_v4.csv unchanged — nothing to push." || {
+            git commit -m "chore: update SST_v4.csv from pipeline run $TODAY [skip ci]"
+            git push
+            echo "✓ SST_v4.csv pushed to $DEST_REPO"
+          }
 
       # ── 10c. Push CAH_REH_Baselines.json to capstone_project_1 ───────────────
       - name: Push baselines JSON to capstone_project_1
