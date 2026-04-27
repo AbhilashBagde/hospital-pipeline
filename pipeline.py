@@ -177,14 +177,19 @@ def _find_reh_file() -> Path:
 
 
 def _exec_build_dataset():
-    """Execute build_dataset.py as a module with overridden file paths."""
+    """Execute build_dataset.py with overridden file paths from BD_* env vars."""
     import importlib
-    import build_dataset as bd
+    import sys
 
     try:
-        importlib.reload(bd)
+        if "build_dataset" in sys.modules:
+            # Already imported in a previous call — reload to re-execute with new env vars
+            import build_dataset as bd
+            importlib.reload(bd)
+        else:
+            # First import: module body executes immediately, picking up BD_* env vars
+            import build_dataset  # noqa: F401
     finally:
-        # Clean up so BD_* vars don't bleed into any subsequent subprocess
         for var in ("BD_CMS_FILES", "BD_NASHP_FILE", "BD_REH_FILE", "BD_OUTPUT_FILE"):
             os.environ.pop(var, None)
 
