@@ -46,7 +46,26 @@ for d in (DATA_RAW, DATA_MANUAL, DATA_OUT, ARCHIVE_DIR):
 
 FINAL_DATASET_PATH  = DATA_OUT / "Final_Hospital_Dataset.csv"
 SST_V3_PATH         = DATA_OUT / "SST_v3.csv"
+SST_V4_PATH         = DATA_OUT / "SST_v4.csv"
 BASELINES_JSON_PATH = DATA_OUT / "CAH_REH_Baselines.json"
+
+# CDC PLACES demographic measures and their short output column names
+_DEMO_MEASURES = [
+    "Cancer (non-skin) or melanoma among adults",
+    "Obesity among adults",
+    "Food insecurity in the past 12 months among adults",
+    "Current lack of health insurance among adults aged 18-64 years",
+    "Any disability among adults",
+    "Fair or poor self-rated health status among adults",
+]
+_DEMO_SHORT = {
+    "Cancer (non-skin) or melanoma among adults":                   "Cancer",
+    "Obesity among adults":                                         "Obesity",
+    "Food insecurity in the past 12 months among adults":           "Food_Insecurity",
+    "Current lack of health insurance among adults aged 18-64 years": "Uninsured",
+    "Any disability among adults":                                  "Disability",
+    "Fair or poor self-rated health status among adults":           "Poor_Health",
+}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -94,11 +113,23 @@ def run_downloads(years: list[int] | None = None) -> dict:
         logger.error("REH info unavailable. See instructions above.")
         sys.exit(1)
 
+    logger.info("=" * 60)
+    logger.info("STEP 3c: Downloading CDC PLACES county demographic data")
+    logger.info("=" * 60)
+    from scrapers import download_places_data
+    try:
+        path_places = download_places_data(output_dir=DATA_RAW)
+    except Exception as exc:
+        logger.warning(f"  CDC PLACES download failed: {exc}")
+        logger.warning("  Demographics step will be skipped.")
+        path_places = None
+
     return {
         "cms": cms_paths,
         "path_340b": path_340b,
         "path_nashp": path_nashp,
         "path_reh": path_reh,
+        "path_places": path_places,
     }
 
 
@@ -408,6 +439,92 @@ def _run_340b_tfidf(sst_df, entity_df) -> Path:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# STEP 6: Merge CDC PLACES demographic data → SST_v4.csv
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_demographics_matching(sst_path: Path, places_path: Path | None) -> Path | None:
+    """
+    Join county-level CDC PLACES demographic data onto SST_v3.
+    Adds 12 columns (6 raw % values + 6 percentile ranks) and writes SST_v4.csv.
+    Returns the output path, or None if places_path is None/missing.
+    """
+    if places_path is None or not Path(places_path).exists():
+        logger.warning("  No PLACES file — skipping demographics step.")
+        return None
+
+    logger.info("=" * 60)
+    logger.info("STEP 6: Merging county-level demographic data (CDC PLACES)")
+    logger.info("=" * 60)
+
+    import pandas as pd
+
+    sst = pd.read_csv(sst_path, dtype=str, low_memory=False)
+    places = pd.read_csv(places_path, low_memory=False)
+
+    # Normalise column names to lowercase for robustness across download formats
+    places.columns = [c.strip().lower() for c in places.columns]
+    # Map expected names (Socrata returns lowercase; direct export may vary)
+    measure_col  = "measure"
+    state_col    = "stateabbr"
+    location_col = "locationname"
+    year_col     = "year"
+    value_col    = "data_value"
+
+    places_filtered = places[places[measure_col].isin(_DEMO_MEASURES)].copy()
+    if places_filtered.empty:
+        logger.warning("  No matching measures found in PLACES file — skipping.")
+        return None
+
+    # Pivot wide, keeping the most recent year for each county × measure
+    places_wide = (
+        places_filtered[[year_col, state_col, location_col, measure_col, value_col]]
+        .sort_values(year_col, ascending=False)
+        .drop_duplicates(subset=[state_col, location_col, measure_col])
+        .pivot(index=[year_col, state_col, location_col], columns=measure_col, values=value_col)
+        .reset_index()
+    )
+    places_wide.columns.name = None
+    places_wide.drop(columns=[year_col], inplace=True)
+
+    # Rename long measure names to short column names
+    places_wide.rename(columns=_DEMO_SHORT, inplace=True)
+
+    # Compute national percentile for each measure (higher = worse for all six)
+    for short in _DEMO_SHORT.values():
+        if short in places_wide.columns:
+            places_wide[f"{short}_PCTL"] = places_wide[short].rank(pct=True) * 100
+
+    # Case-insensitive county merge
+    sst["_county_key"] = sst["County"].str.strip().str.lower()
+    places_wide["_county_key"] = places_wide[location_col].str.strip().str.lower()
+
+    merged = pd.merge(
+        sst,
+        places_wide,
+        left_on=["State", "_county_key"],
+        right_on=[state_col, "_county_key"],
+        how="left",
+    )
+
+    # Drop internal merge helpers and places join keys
+    drop_cols = ["_county_key", state_col, location_col]
+    merged.drop(columns=[c for c in drop_cols if c in merged.columns], inplace=True)
+
+    # Coverage report
+    first_demo = list(_DEMO_SHORT.values())[0]
+    n_matched = int(merged[first_demo].notna().sum()) if first_demo in merged.columns else 0
+    logger.info(f"  Rows with demographic data: {n_matched:,} / {len(merged):,}")
+    for short in _DEMO_SHORT.values():
+        if short in merged.columns:
+            miss = int(merged[short].isna().sum())
+            logger.info(f"    {short}: {miss:,} missing ({miss/len(merged):.1%})")
+
+    merged.to_csv(SST_V4_PATH, index=False)
+    logger.info(f"  ✓ SST_v4.csv → {SST_V4_PATH}")
+    return SST_V4_PATH
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # STEP 7: Build CAH_REH_Baselines.json
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -435,12 +552,17 @@ def run_build_baselines(sst_path: Path) -> Path:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def archive_outputs():
-    """Copy SST_v3.csv and CAH_REH_Baselines.json to archive with a timestamp suffix."""
+    """Copy SST_v3/v4.csv and CAH_REH_Baselines.json to archive with a timestamp suffix."""
     today = date.today().strftime("%Y%m%d")
 
-    archive_csv = ARCHIVE_DIR / f"SST_v3_{today}.csv"
-    shutil.copy2(SST_V3_PATH, archive_csv)
-    logger.info(f"  Archived: {archive_csv}")
+    archive_v3 = ARCHIVE_DIR / f"SST_v3_{today}.csv"
+    shutil.copy2(SST_V3_PATH, archive_v3)
+    logger.info(f"  Archived: {archive_v3}")
+
+    if SST_V4_PATH.exists():
+        archive_v4 = ARCHIVE_DIR / f"SST_v4_{today}.csv"
+        shutil.copy2(SST_V4_PATH, archive_v4)
+        logger.info(f"  Archived: {archive_v4}")
 
     if BASELINES_JSON_PATH.exists():
         archive_json = ARCHIVE_DIR / f"CAH_REH_Baselines_{today}.json"
@@ -451,7 +573,9 @@ def archive_outputs():
     with manifest.open("w") as f:
         f.write(f"Pipeline run: {datetime.now().isoformat()}\n")
         f.write(f"SST_v3.csv rows: {_count_csv_rows(SST_V3_PATH):,}\n")
-        f.write(f"Archive: {archive_csv.name}\n")
+        f.write(f"Archive: {archive_v3.name}\n")
+        if SST_V4_PATH.exists():
+            f.write(f"SST_v4.csv rows: {_count_csv_rows(SST_V4_PATH):,}\n")
         if BASELINES_JSON_PATH.exists():
             f.write(f"CAH_REH_Baselines.json: yes\n")
     logger.info(f"  Manifest: {manifest}")
@@ -500,8 +624,10 @@ def main():
         logger.info(f"  Would download CMS years: {args.years or 'all known'}")
         logger.info("  Would download 340B from HRSA OPAIS")
         logger.info("  Would scrape NASHP hospital cost tool page")
+        logger.info("  Would download CDC PLACES county demographic data")
         logger.info("  Would run build_dataset.py → Final_Hospital_Dataset.csv")
         logger.info("  Would run 340B matching → SST_v3.csv")
+        logger.info("  Would run demographics merge → SST_v4.csv")
         logger.info("  Would run build_baselines_json.py → CAH_REH_Baselines.json")
         logger.info("  Would archive outputs")
         return
@@ -521,7 +647,14 @@ def main():
             sorted(DATA_MANUAL.glob("NASHP*.xlsx"), reverse=True)
         )
         path_nashp = path_nashp[0] if path_nashp else None
-        file_paths = {"cms": cms_paths, "path_340b": path_340b, "path_nashp": path_nashp}
+        path_places_list = sorted(DATA_RAW.glob("PLACES_county_*.csv"), reverse=True)
+        path_places = path_places_list[0] if path_places_list else None
+        file_paths = {
+            "cms": cms_paths,
+            "path_340b": path_340b,
+            "path_nashp": path_nashp,
+            "path_places": path_places,
+        }
 
         if not cms_paths:
             logger.error("No CMS files in data/raw/. Run without --skip-download first.")
@@ -541,6 +674,9 @@ def main():
     # ── 340B matching phase ───────────────────────────────────────────────────
     run_340b_matching(path_final, file_paths["path_340b"])
 
+    # ── Demographics merge phase ──────────────────────────────────────────────
+    run_demographics_matching(SST_V3_PATH, file_paths.get("path_places"))
+
     # ── Baselines JSON ────────────────────────────────────────────────────────
     logger.info("=" * 60)
     logger.info("STEP 7: Building CAH_REH_Baselines.json")
@@ -557,6 +693,8 @@ def main():
     logger.info("=" * 60)
     logger.info(f"PIPELINE COMPLETE in {elapsed:.0f}s")
     logger.info(f"  Output: {SST_V3_PATH}")
+    if SST_V4_PATH.exists():
+        logger.info(f"  Output: {SST_V4_PATH}  (with demographics)")
     logger.info("=" * 60)
 
 
