@@ -1,4 +1,4 @@
-Pipeline run: 2026-04-27T17:52:55.167553
+Pipeline run: 2026-04-27T18:12:23.290766
 SST_v3.csv rows: 81,701
 Archive: SST_v3_20260427.csv
 SST_v4.csv rows: 81,701
