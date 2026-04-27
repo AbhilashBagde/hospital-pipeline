@@ -482,13 +482,11 @@ def run_demographics_matching(sst_path: Path, places_path: Path | None) -> Path 
     places_wide.columns.name = None
     places_wide.drop(columns=[year_col], inplace=True)
 
-    # Rename long measure names to short column names
-    places_wide.rename(columns=_DEMO_SHORT, inplace=True)
-
-    # Compute national percentile for each measure (higher = worse for all six)
-    for short in _DEMO_SHORT.values():
-        if short in places_wide.columns:
-            places_wide[f"{short}_PCTL"] = places_wide[short].rank(pct=True) * 100
+    # Keep full CDC measure names for raw % columns (matches SST.v5 reference).
+    # Percentile columns use the short names (e.g. Cancer_PCTL).
+    for long, short in _DEMO_SHORT.items():
+        if long in places_wide.columns:
+            places_wide[f"{short}_PCTL"] = places_wide[long].rank(pct=True) * 100
 
     # Case-insensitive county merge
     sst["_county_key"] = sst["County"].str.strip().str.lower()
@@ -506,13 +504,13 @@ def run_demographics_matching(sst_path: Path, places_path: Path | None) -> Path 
     drop_cols = ["_county_key", state_col, location_col]
     merged.drop(columns=[c for c in drop_cols if c in merged.columns], inplace=True)
 
-    # Coverage report
-    first_demo = list(_DEMO_SHORT.values())[0]
-    n_matched = int(merged[first_demo].notna().sum()) if first_demo in merged.columns else 0
+    # Coverage report (use long column names — that's what's in merged now)
+    first_long = list(_DEMO_SHORT.keys())[0]
+    n_matched = int(merged[first_long].notna().sum()) if first_long in merged.columns else 0
     logger.info(f"  Rows with demographic data: {n_matched:,} / {len(merged):,}")
-    for short in _DEMO_SHORT.values():
-        if short in merged.columns:
-            miss = int(merged[short].isna().sum())
+    for long, short in _DEMO_SHORT.items():
+        if long in merged.columns:
+            miss = int(merged[long].isna().sum())
             logger.info(f"    {short}: {miss:,} missing ({miss/len(merged):.1%})")
 
     merged.to_csv(SST_V4_PATH, index=False)

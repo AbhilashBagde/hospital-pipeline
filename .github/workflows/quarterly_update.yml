@@ -136,10 +136,17 @@ jobs:
               df4 = pd.read_csv(sst4, nrows=5)
               row_count4 = sum(1 for _ in open(sst4)) - 1
               print(f"✓ SST_v4.csv: {row_count4:,} rows × {len(df4.columns)} columns")
-              demo_cols = ["Cancer", "Obesity", "Food_Insecurity",
-                           "Uninsured", "Disability", "Poor_Health"]
-              pctl_cols = [f"{c}_PCTL" for c in demo_cols]
-              for col in demo_cols + pctl_cols:
+              raw_cols = [
+                  "Cancer (non-skin) or melanoma among adults",
+                  "Obesity among adults",
+                  "Food insecurity in the past 12 months among adults",
+                  "Current lack of health insurance among adults aged 18-64 years",
+                  "Any disability among adults",
+                  "Fair or poor self-rated health status among adults",
+              ]
+              pctl_cols = ["Cancer_PCTL", "Obesity_PCTL", "Food_Insecurity_PCTL",
+                           "Uninsured_PCTL", "Disability_PCTL", "Poor_Health_PCTL"]
+              for col in raw_cols + pctl_cols:
                   assert col in df4.columns, f"Missing demographic column: {col}"
               print("✓ All demographic columns present in SST_v4.csv")
           else:
