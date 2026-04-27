@@ -140,24 +140,22 @@ def run_downloads(years: list[int] | None = None) -> dict:
 def run_build_dataset(file_paths: dict) -> Path:
     """
     Run the build_dataset logic, pointing it at the freshly downloaded files.
-    We import the module's functions rather than subprocess-calling it so that
-    errors surface as Python exceptions with proper tracebacks.
+    Paths are passed via environment variables so they survive importlib.reload().
     """
     logger.info("=" * 60)
     logger.info("STEP 4: Building Final_Hospital_Dataset.csv")
     logger.info("=" * 60)
 
-    # Patch the file paths that build_dataset.py uses
-    import build_dataset as bd
+    import json
 
-    # Override the module-level path constants before it runs
-    bd.CMS_FILES = {yr: str(p) for yr, p in file_paths["cms"].items()}
-    bd.NASHP_FILE = str(file_paths["path_nashp"])
-    bd.REH_FILE = str(_find_reh_file())
-    bd.OUTPUT_FILE = str(FINAL_DATASET_PATH)
+    # build_dataset.py reads BD_* env vars at module load time, which is the
+    # only mechanism that survives importlib.reload() (direct attribute patches
+    # are wiped when the module re-executes).
+    os.environ["BD_CMS_FILES"]   = json.dumps({yr: str(p) for yr, p in file_paths["cms"].items()})
+    os.environ["BD_NASHP_FILE"]  = str(file_paths["path_nashp"])
+    os.environ["BD_REH_FILE"]    = str(_find_reh_file())
+    os.environ["BD_OUTPUT_FILE"] = str(FINAL_DATASET_PATH)
 
-    # Re-run the build by calling a thin wrapper; build_dataset.py is structured
-    # as a script so we exec its main block after patching paths.
     _exec_build_dataset()
     logger.info(f"  Final_Hospital_Dataset.csv → {FINAL_DATASET_PATH}")
     return FINAL_DATASET_PATH
@@ -183,9 +181,12 @@ def _exec_build_dataset():
     import importlib
     import build_dataset as bd
 
-    # The script body runs at import time; we need to re-execute it.
-    # Since the paths are patched above, we reload the module.
-    importlib.reload(bd)
+    try:
+        importlib.reload(bd)
+    finally:
+        # Clean up so BD_* vars don't bleed into any subsequent subprocess
+        for var in ("BD_CMS_FILES", "BD_NASHP_FILE", "BD_REH_FILE", "BD_OUTPUT_FILE"):
+            os.environ.pop(var, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
