@@ -47,7 +47,11 @@ for d in (DATA_RAW, DATA_MANUAL, DATA_OUT, ARCHIVE_DIR):
 FINAL_DATASET_PATH  = DATA_OUT / "Final_Hospital_Dataset.csv"
 SST_V3_PATH         = DATA_OUT / "SST_v3.csv"
 SST_V4_PATH         = DATA_OUT / "SST_v4.csv"
+SST_V6_PATH         = DATA_OUT / "SST_v6.csv"
 BASELINES_JSON_PATH = DATA_OUT / "CAH_REH_Baselines.json"
+ROAD_DIST_FILE      = DATA_MANUAL / "updated_df_road_dist.csv"
+
+STATES_5 = ['AR', 'LA', 'NM', 'OK', 'TX']
 
 # CDC PLACES demographic measures and their short output column names
 _DEMO_MEASURES = [
@@ -519,11 +523,58 @@ def run_demographics_matching(sst_path: Path, places_path: Path | None) -> Path 
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STEP 7: Build CAH_REH_Baselines.json
+# STEP 7: Filter to 5-state region + road distance → SST_v6.csv
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_road_dist_matching(sst_path: Path) -> Path:
+    """
+    Filter SST to the 5-state region (AR, LA, NM, OK, TX) and merge
+    nearest_building_road_dist_miles from data/manual/updated_df_road_dist.csv.
+    Writes SST_v6.csv — the canonical input for build_baselines_json.py.
+    """
+    logger.info("=" * 60)
+    logger.info("STEP 7: Building SST_v6.csv (5-state region + road distance)")
+    logger.info("=" * 60)
+
+    import pandas as pd
+
+    sst = pd.read_csv(sst_path, dtype=str, low_memory=False)
+    sst_5 = sst[sst['State'].isin(STATES_5)].copy()
+    logger.info(f"  Filtered to 5 states: {len(sst_5):,} rows, {sst_5['CCN'].nunique()} unique hospitals")
+
+    if ROAD_DIST_FILE.exists():
+        road = pd.read_csv(ROAD_DIST_FILE, dtype={'CCN': str}, low_memory=False)
+        road['Year'] = pd.to_numeric(road['Year'], errors='coerce')
+        road['CCN'] = road['CCN'].astype(str).str.strip().str.zfill(6)
+        road_deduped = (
+            road.sort_values('Year', ascending=False)
+            .drop_duplicates(subset='CCN', keep='first')
+            [['CCN', 'nearest_building_road_dist_miles']]
+        )
+        sst_5['CCN'] = sst_5['CCN'].astype(str).str.strip().str.zfill(6)
+        # Drop existing column if present (e.g. from a prior run)
+        if 'nearest_building_road_dist_miles' in sst_5.columns:
+            sst_5 = sst_5.drop(columns=['nearest_building_road_dist_miles'])
+        sst_5 = sst_5.merge(road_deduped, on='CCN', how='left')
+        populated = sst_5['nearest_building_road_dist_miles'].notna().sum()
+        logger.info(f"  Road distance populated: {populated:,} / {len(sst_5):,} rows")
+    else:
+        logger.warning(f"  Road distance file not found: {ROAD_DIST_FILE}")
+        logger.warning("  Copy updated_df_road_dist.csv to data/manual/ to include road distances.")
+        if 'nearest_building_road_dist_miles' not in sst_5.columns:
+            sst_5['nearest_building_road_dist_miles'] = None
+
+    sst_5.to_csv(SST_V6_PATH, index=False)
+    logger.info(f"  ✓ SST_v6.csv → {SST_V6_PATH}")
+    return SST_V6_PATH
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 8: Build CAH_REH_Baselines.json
 # ─────────────────────────────────────────────────────────────────────────────
 
 def run_build_baselines(sst_path: Path) -> Path:
-    """Run build_baselines_json.py to produce CAH_REH_Baselines.json."""
+    """Run build_baselines_json.py with SST_v6.csv to produce CAH_REH_Baselines.json."""
     logger.info("  Running build_baselines_json.py…")
     result = subprocess.run(
         [sys.executable,
@@ -546,7 +597,7 @@ def run_build_baselines(sst_path: Path) -> Path:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def archive_outputs():
-    """Copy SST_v3/v4.csv and CAH_REH_Baselines.json to archive with a timestamp suffix."""
+    """Copy SST_v3/v4/v6.csv and CAH_REH_Baselines.json to archive with a timestamp suffix."""
     today = date.today().strftime("%Y%m%d")
 
     archive_v3 = ARCHIVE_DIR / f"SST_v3_{today}.csv"
@@ -557,6 +608,11 @@ def archive_outputs():
         archive_v4 = ARCHIVE_DIR / f"SST_v4_{today}.csv"
         shutil.copy2(SST_V4_PATH, archive_v4)
         logger.info(f"  Archived: {archive_v4}")
+
+    if SST_V6_PATH.exists():
+        archive_v6 = ARCHIVE_DIR / f"SST_v6_{today}.csv"
+        shutil.copy2(SST_V6_PATH, archive_v6)
+        logger.info(f"  Archived: {archive_v6}")
 
     if BASELINES_JSON_PATH.exists():
         archive_json = ARCHIVE_DIR / f"CAH_REH_Baselines_{today}.json"
@@ -570,6 +626,8 @@ def archive_outputs():
         f.write(f"Archive: {archive_v3.name}\n")
         if SST_V4_PATH.exists():
             f.write(f"SST_v4.csv rows: {_count_csv_rows(SST_V4_PATH):,}\n")
+        if SST_V6_PATH.exists():
+            f.write(f"SST_v6.csv rows: {_count_csv_rows(SST_V6_PATH):,}\n")
         if BASELINES_JSON_PATH.exists():
             f.write(f"CAH_REH_Baselines.json: yes\n")
     logger.info(f"  Manifest: {manifest}")
@@ -622,7 +680,8 @@ def main():
         logger.info("  Would run build_dataset.py → Final_Hospital_Dataset.csv")
         logger.info("  Would run 340B matching → SST_v3.csv")
         logger.info("  Would run demographics merge → SST_v4.csv")
-        logger.info("  Would run build_baselines_json.py → CAH_REH_Baselines.json")
+        logger.info("  Would filter to 5-state region + road distance → SST_v6.csv")
+        logger.info("  Would run build_baselines_json.py (SST_v6) → CAH_REH_Baselines.json")
         logger.info("  Would archive outputs")
         return
 
@@ -669,17 +728,23 @@ def main():
     run_340b_matching(path_final, file_paths["path_340b"])
 
     # ── Demographics merge phase ──────────────────────────────────────────────
-    run_demographics_matching(SST_V3_PATH, file_paths.get("path_places"))
+    sst_for_v6 = run_demographics_matching(SST_V3_PATH, file_paths.get("path_places"))
+    # If demographics step was skipped, fall back to v3
+    if sst_for_v6 is None:
+        sst_for_v6 = SST_V3_PATH
+
+    # ── 5-state filter + road distance → SST_v6 ───────────────────────────────
+    run_road_dist_matching(sst_for_v6)
 
     # ── Baselines JSON ────────────────────────────────────────────────────────
     logger.info("=" * 60)
-    logger.info("STEP 7: Building CAH_REH_Baselines.json")
+    logger.info("STEP 8: Building CAH_REH_Baselines.json from SST_v6.csv")
     logger.info("=" * 60)
-    run_build_baselines(SST_V3_PATH)
+    run_build_baselines(SST_V6_PATH)
 
     # ── Archive ───────────────────────────────────────────────────────────────
     logger.info("=" * 60)
-    logger.info("STEP 8: Archiving outputs")
+    logger.info("STEP 9: Archiving outputs")
     logger.info("=" * 60)
     archive_outputs()
 
@@ -689,6 +754,9 @@ def main():
     logger.info(f"  Output: {SST_V3_PATH}")
     if SST_V4_PATH.exists():
         logger.info(f"  Output: {SST_V4_PATH}  (with demographics)")
+    if SST_V6_PATH.exists():
+        logger.info(f"  Output: {SST_V6_PATH}  (5-state + road distance)")
+    logger.info(f"  Output: {BASELINES_JSON_PATH}")
     logger.info("=" * 60)
 
 
