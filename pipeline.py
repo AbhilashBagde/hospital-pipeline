@@ -542,27 +542,38 @@ def run_road_dist_matching(sst_path: Path) -> Path:
     sst_5 = sst[sst['State'].isin(STATES_5)].copy()
     logger.info(f"  Filtered to 5 states: {len(sst_5):,} rows, {sst_5['CCN'].nunique()} unique hospitals")
 
+    road_ok = False
     if ROAD_DIST_FILE.exists():
         road = pd.read_csv(ROAD_DIST_FILE, dtype={'CCN': str}, low_memory=False)
-        road['Year'] = pd.to_numeric(road['Year'], errors='coerce')
-        road['CCN'] = road['CCN'].astype(str).str.strip().str.zfill(6)
-        road_deduped = (
-            road.sort_values('Year', ascending=False)
-            .drop_duplicates(subset='CCN', keep='first')
-            [['CCN', 'nearest_building_road_dist_miles']]
-        )
-        sst_5['CCN'] = sst_5['CCN'].astype(str).str.strip().str.zfill(6)
-        # Drop existing column if present (e.g. from a prior run)
-        if 'nearest_building_road_dist_miles' in sst_5.columns:
-            sst_5 = sst_5.drop(columns=['nearest_building_road_dist_miles'])
-        sst_5 = sst_5.merge(road_deduped, on='CCN', how='left')
-        populated = sst_5['nearest_building_road_dist_miles'].notna().sum()
-        logger.info(f"  Road distance populated: {populated:,} / {len(sst_5):,} rows")
+        required = {'CCN', 'nearest_building_road_dist_miles'}
+        if not required.issubset(road.columns):
+            # File is likely an LFS pointer (no real columns) — skip gracefully
+            logger.warning(
+                f"  Road distance file appears to be an LFS pointer or is malformed "
+                f"(columns: {list(road.columns)[:5]}). Skipping road distance merge."
+            )
+        else:
+            road_ok = True
+            if 'Year' in road.columns:
+                road['Year'] = pd.to_numeric(road['Year'], errors='coerce')
+                road = road.sort_values('Year', ascending=False)
+            road['CCN'] = road['CCN'].astype(str).str.strip().str.zfill(6)
+            road_deduped = (
+                road.drop_duplicates(subset='CCN', keep='first')
+                [['CCN', 'nearest_building_road_dist_miles']]
+            )
+            sst_5['CCN'] = sst_5['CCN'].astype(str).str.strip().str.zfill(6)
+            if 'nearest_building_road_dist_miles' in sst_5.columns:
+                sst_5 = sst_5.drop(columns=['nearest_building_road_dist_miles'])
+            sst_5 = sst_5.merge(road_deduped, on='CCN', how='left')
+            populated = sst_5['nearest_building_road_dist_miles'].notna().sum()
+            logger.info(f"  Road distance populated: {populated:,} / {len(sst_5):,} rows")
     else:
         logger.warning(f"  Road distance file not found: {ROAD_DIST_FILE}")
-        logger.warning("  Copy updated_df_road_dist.csv to data/manual/ to include road distances.")
-        if 'nearest_building_road_dist_miles' not in sst_5.columns:
-            sst_5['nearest_building_road_dist_miles'] = None
+        logger.warning("  Ensure data/manual/updated_df_road_dist.csv is committed to LFS.")
+
+    if not road_ok and 'nearest_building_road_dist_miles' not in sst_5.columns:
+        sst_5['nearest_building_road_dist_miles'] = None
 
     sst_5.to_csv(SST_V6_PATH, index=False)
     logger.info(f"  ✓ SST_v6.csv → {SST_V6_PATH}")
