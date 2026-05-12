@@ -263,20 +263,14 @@ jobs:
             git commit -m "chore: pipeline run ${{ steps.date.outputs.today }} [skip ci]"
           git push || echo "Push skipped (branch protection or nothing to push)."
 
-      # ── 10b. Push SST_v6.csv to capstone_project_1 ───────────────────────────
-      # SST_v6.csv is the primary 5-state output used by the calculator.
-      # Too large for the GitHub Contents API — use git clone → copy → push.
-      - name: Push SST_v6.csv to capstone_project_1
-        if: success() && hashFiles('data/output/SST_v6.csv') != ''
+      # ── 10b+c. Push SST_v6.csv + CAH_REH_Baselines.json to capstone_project_1 ──
+      # Both files are too large to pass through the GitHub Contents API
+      # (base64 payload hits Linux ARG_MAX). Use a single git clone → copy → push.
+      - name: Push outputs to capstone_project_1
+        if: success()
         env:
           CAPSTONE_TOKEN: ${{ secrets.CAPSTONE_REPO_TOKEN }}
         run: |
-          FILE_PATH="data/output/SST_v6.csv"
-          if [ ! -f "$FILE_PATH" ]; then
-            echo "SST_v6.csv not found — skipping"
-            exit 0
-          fi
-
           DEST_REPO="AbhilashBagde/capstone_project_1"
           TODAY=$(date +%Y-%m-%d)
 
@@ -284,77 +278,36 @@ jobs:
             "https://x-access-token:${CAPSTONE_TOKEN}@github.com/${DEST_REPO}.git" \
             /tmp/capstone_clone
 
-          cp "$FILE_PATH" /tmp/capstone_clone/SST_v6.csv
-
           cd /tmp/capstone_clone
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add SST_v6.csv
-          git diff --staged --quiet && echo "SST_v6.csv unchanged — nothing to push." || {
-            git commit -m "chore: update SST_v6.csv from pipeline run $TODAY [skip ci]"
-            git push
-            echo "✓ SST_v6.csv pushed to $DEST_REPO"
-          }
 
-      # ── 10c. Push CAH_REH_Baselines.json to capstone_project_1 ───────────────
-      - name: Push baselines JSON to capstone_project_1
-        if: success()
-        env:
-          CAPSTONE_TOKEN: ${{ secrets.CAPSTONE_REPO_TOKEN }}
-        run: |
-          DEST_REPO="AbhilashBagde/capstone_project_1"
-          FILE_PATH="data/output/CAH_REH_Baselines.json"
-          DEST_PATH="CAH_REH_Baselines.json"
+          CHANGED=0
 
-          if [ ! -f "$FILE_PATH" ]; then
-            echo "::error::CAH_REH_Baselines.json not found — skipping push"
-            exit 1
+          if [ -f "$GITHUB_WORKSPACE/data/output/SST_v6.csv" ]; then
+            cp "$GITHUB_WORKSPACE/data/output/SST_v6.csv" SST_v6.csv
+            git add SST_v6.csv
+            CHANGED=1
+            echo "Staged SST_v6.csv"
+          else
+            echo "SST_v6.csv not found — skipping"
           fi
 
-          # Base64-encode the file for the GitHub Contents API
-          CONTENT=$(base64 -w 0 "$FILE_PATH")
-
-          # Get the current file's SHA (needed for updates; empty string if file is new)
-          SHA=$(curl -s \
-            -H "Authorization: Bearer $CAPSTONE_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$DEST_REPO/contents/$DEST_PATH" \
-            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || echo "")
-
-          # Build JSON payload
-          TODAY=$(date +%Y-%m-%d)
-          if [ -n "$SHA" ]; then
-            PAYLOAD=$(python3 -c "
-          import json, sys
-          print(json.dumps({
-            'message': 'chore: update CAH_REH_Baselines.json from pipeline run $TODAY [skip ci]',
-            'content': sys.argv[1],
-            'sha':     sys.argv[2],
-          }))" "$CONTENT" "$SHA")
+          if [ -f "$GITHUB_WORKSPACE/data/output/CAH_REH_Baselines.json" ]; then
+            cp "$GITHUB_WORKSPACE/data/output/CAH_REH_Baselines.json" CAH_REH_Baselines.json
+            git add CAH_REH_Baselines.json
+            CHANGED=1
+            echo "Staged CAH_REH_Baselines.json"
           else
-            PAYLOAD=$(python3 -c "
-          import json, sys
-          print(json.dumps({
-            'message': 'chore: add CAH_REH_Baselines.json from pipeline run $TODAY [skip ci]',
-            'content': sys.argv[1],
-          }))" "$CONTENT")
+            echo "CAH_REH_Baselines.json not found — skipping"
           fi
 
-          # Push via GitHub Contents API
-          HTTP_STATUS=$(curl -s -o /tmp/push_response.json -w "%{http_code}" \
-            -X PUT \
-            -H "Authorization: Bearer $CAPSTONE_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/$DEST_REPO/contents/$DEST_PATH" \
-            -d "$PAYLOAD")
-
-          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "201" ]; then
-            echo "✓ CAH_REH_Baselines.json pushed to $DEST_REPO (HTTP $HTTP_STATUS)"
-          else
-            echo "::error::Push failed (HTTP $HTTP_STATUS)"
-            cat /tmp/push_response.json
-            exit 1
+          if [ "$CHANGED" = "1" ]; then
+            git diff --staged --quiet && echo "No changes to push." || {
+              git commit -m "chore: update outputs from pipeline run $TODAY [skip ci]"
+              git push
+              echo "✓ Pushed SST_v6.csv + CAH_REH_Baselines.json to $DEST_REPO"
+            }
           fi
 
       # ── 11. Surface failure details ────────────────────────────────────────────
