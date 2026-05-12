@@ -113,6 +113,7 @@ jobs:
           import sys
           from pathlib import Path
           import pandas as pd
+          import json
 
           sst = Path("data/output/SST_v3.csv")
           if not sst.exists():
@@ -152,6 +153,35 @@ jobs:
           else:
               print("⚠ SST_v4.csv not found — demographics step may have been skipped")
 
+          sst6 = Path("data/output/SST_v6.csv")
+          if not sst6.exists():
+              print("ERROR: SST_v6.csv not found!", file=sys.stderr)
+              sys.exit(1)
+          df6 = pd.read_csv(sst6, nrows=5)
+          row_count6 = sum(1 for _ in open(sst6)) - 1
+          print(f"✓ SST_v6.csv: {row_count6:,} rows × {len(df6.columns)} columns")
+          assert "nearest_building_road_dist_miles" in df6.columns, \
+              "Missing nearest_building_road_dist_miles in SST_v6"
+          states = set(pd.read_csv(sst6, usecols=["State"])["State"].dropna().unique())
+          assert states <= {"AR","LA","NM","OK","TX"}, f"Unexpected states in SST_v6: {states - {'AR','LA','NM','OK','TX'}}"
+          print(f"✓ SST_v6.csv states: {sorted(states)}")
+
+          baselines = Path("data/output/CAH_REH_Baselines.json")
+          if not baselines.exists():
+              print("ERROR: CAH_REH_Baselines.json not found!", file=sys.stderr)
+              sys.exit(1)
+          with open(baselines) as f:
+              bl = json.load(f)
+          assert "baseline_average" in bl and "baseline_most_recent" in bl, \
+              "CAH_REH_Baselines.json missing required keys"
+          assert len(bl["baseline_average"]) > 0, "baseline_average is empty"
+          sample = bl["baseline_average"][0]
+          assert "nearest_building_road_dist_miles" in sample, \
+              "baseline_average records missing road distance"
+          assert "Solvency_Status" in sample, "baseline_average records missing Solvency_Status"
+          print(f"✓ CAH_REH_Baselines.json: {len(bl['baseline_average'])} avg records, "
+                f"{len(bl['baseline_most_recent'])} recent records")
+
           print("✓ All validation checks passed.")
           EOF
 
@@ -173,8 +203,10 @@ jobs:
             ### Files
             | File | Description |
             |------|-------------|
-            | `SST_v4.csv` | Final dataset with county demographics (NASHP + CMS + 340B + PLACES) |
-            | `SST_v3.csv` | Dataset without demographics (NASHP + CMS + 340B) |
+            | `SST_v6.csv` | **Primary output** — 5-state region (AR, LA, NM, OK, TX) with demographics + road distance |
+            | `SST_v4.csv` | All-states dataset with county demographics (NASHP + CMS + 340B + PLACES) |
+            | `SST_v3.csv` | All-states dataset without demographics (NASHP + CMS + 340B) |
+            | `CAH_REH_Baselines.json` | Per-hospital baselines for the CAH/REH Calculator |
             | `Final_Hospital_Dataset.csv` | Pre-340B intermediate |
             | `REH_Info_Cleaned.csv` | Scraped REH conversion list |
             | `pipeline_manifest.txt` | Run metadata |
@@ -186,16 +218,19 @@ jobs:
             - UNC Sheps Center REH list (headless browser scrape)
             - CMS Provider of Services file (Socrata API)
             - CDC PLACES Local Data for Better Health, County Data (Socrata API)
+            - Road distance data (data/manual/updated_df_road_dist.csv)
 
             ### Download latest
             ```python
             import pandas as pd
-            url = "https://github.com/${{ github.repository }}/releases/latest/download/SST_v4.csv"
+            url = "https://github.com/${{ github.repository }}/releases/latest/download/SST_v6.csv"
             df = pd.read_csv(url)
             ```
           files: |
+            data/output/SST_v6.csv
             data/output/SST_v4.csv
             data/output/SST_v3.csv
+            data/output/CAH_REH_Baselines.json
             data/output/Final_Hospital_Dataset.csv
             data/raw/REH_Info_Cleaned.csv
             data/output/pipeline_manifest.txt
@@ -227,18 +262,17 @@ jobs:
             git commit -m "chore: pipeline run ${{ steps.date.outputs.today }} [skip ci]"
           git push || echo "Push skipped (branch protection or nothing to push)."
 
-      # ── 10b. Push SST_v4.csv to capstone_project_1 ───────────────────────────
-      # SST_v4.csv is ~73 MB — too large for the GitHub Contents API (base64
-      # payload exceeds OS ARG_MAX and the API's own size limit). Use a direct
-      # git clone → copy → commit → push instead.
-      - name: Push SST_v4.csv to capstone_project_1
-        if: success() && hashFiles('data/output/SST_v4.csv') != ''
+      # ── 10b. Push SST_v6.csv to capstone_project_1 ───────────────────────────
+      # SST_v6.csv is the primary 5-state output used by the calculator.
+      # Too large for the GitHub Contents API — use git clone → copy → push.
+      - name: Push SST_v6.csv to capstone_project_1
+        if: success() && hashFiles('data/output/SST_v6.csv') != ''
         env:
           CAPSTONE_TOKEN: ${{ secrets.CAPSTONE_REPO_TOKEN }}
         run: |
-          FILE_PATH="data/output/SST_v4.csv"
+          FILE_PATH="data/output/SST_v6.csv"
           if [ ! -f "$FILE_PATH" ]; then
-            echo "SST_v4.csv not found — skipping"
+            echo "SST_v6.csv not found — skipping"
             exit 0
           fi
 
@@ -249,16 +283,16 @@ jobs:
             "https://x-access-token:${CAPSTONE_TOKEN}@github.com/${DEST_REPO}.git" \
             /tmp/capstone_clone
 
-          cp "$FILE_PATH" /tmp/capstone_clone/SST_v4.csv
+          cp "$FILE_PATH" /tmp/capstone_clone/SST_v6.csv
 
           cd /tmp/capstone_clone
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add SST_v4.csv
-          git diff --staged --quiet && echo "SST_v4.csv unchanged — nothing to push." || {
-            git commit -m "chore: update SST_v4.csv from pipeline run $TODAY [skip ci]"
+          git add SST_v6.csv
+          git diff --staged --quiet && echo "SST_v6.csv unchanged — nothing to push." || {
+            git commit -m "chore: update SST_v6.csv from pipeline run $TODAY [skip ci]"
             git push
-            echo "✓ SST_v4.csv pushed to $DEST_REPO"
+            echo "✓ SST_v6.csv pushed to $DEST_REPO"
           }
 
       # ── 10c. Push CAH_REH_Baselines.json to capstone_project_1 ───────────────
